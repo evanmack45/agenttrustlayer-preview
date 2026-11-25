@@ -36,6 +36,7 @@
   // ---- filtering ----
   const today = Date.now();
   function apply(s, push = true) {
+    $$('.chip').forEach((c) => c.classList.toggle('on', c.querySelector('input').checked));
     const words = s.q.toLowerCase().split(/\s+/).filter(Boolean);
     let shown = 0;
     for (const li of entries) {
@@ -111,7 +112,7 @@
         lines.forEach((l) => l.classList.toggle('now', +l.dataset.gate === n));
         packet.dataset.gate = n;
         const cur = lines[n - 1];
-        $('#pk-now').textContent = `Gate ${n}: ${cur.querySelector('.pk-k').textContent}, e.g. ${cur.querySelector('.pk-v').textContent}`;
+        $('#pk-now').textContent = `Gate ${n}: ${cur.querySelector('.pk-k').textContent}`;
         if (!reduce) { packet.classList.remove('pulse'); void packet.offsetWidth; packet.classList.add('pulse'); }
       }
     }, { rootMargin: '-45% 0px -50% 0px' });

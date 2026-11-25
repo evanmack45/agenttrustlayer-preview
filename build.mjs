@@ -107,7 +107,7 @@ ${listHTML(list, 'cloud')}${emptyHTML}</section>`;
 }
 
 function ribbonHTML() {
-  const rows = specs.map(({ e, gates }) => `<tr class="c-${CAT_KEY[e.category]}" data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g) => `<td class="${g.hit ? (g.home ? 'hit home' : 'hit') : ''}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
+  const rows = specs.map(({ e, gates }) => `<tr class="c-${CAT_KEY[e.category]}" data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g, i) => `<td class="${[g.hit && 'hit', g.home && 'home', g.hit && (gates[i - 1]?.hit || gates[i + 1]?.hit) && 'join'].filter(Boolean).join(' ')}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
   return `<div class="ribbon-wrap"><table class="ribbon"><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}"><span class="gn">${g.n}</span> ${esc(g.plain.split(' ')[0])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
@@ -182,15 +182,17 @@ const html = `<!doctype html>
 <p class="dek">When an AI agent shows up at a website, an API or a checkout, four questions come up. Who are you? What may you do? Can you pay? Can we prove what you did? This map lists the standards, products, open-source projects and deals working on each question. Every entry has a date and a link to its source.</p>
 <p class="facts"><b>${entries.length}</b> entries · <b>${osCount}</b> open source · <b>${events.length}</b> dated events · last checked <b>${esc(fmtDate(generated))}</b></p>
 </div>
+<div class="hero-side">
 <div class="pace">
 <p class="pace-h"><b>${events.length} dated events in ${W.nWeeks} weeks.</b> Each square is one event. Each column is one week, oldest on the left.</p>
 ${W.html}
 <p class="legend"><span class="sq c-std"></span> Standard <span class="sq c-deal"></span> Deal <span class="sq c-prod"></span> Product</p>
 </div>
-</div>
-<div class="wrap week">
+<div class="week">
 <h2 class="small-h">What changed in the 7 days to ${esc(fmtDate(generated))}</h2>
 <ul class="week-list">${thisWeek.map((ev) => `<li class="c-${EVENT_KEY[ev.type]}"><span class="wd">${esc(fmtDate(ev.date).replace(/, \d{4}$/, ''))}</span> <a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></li>`).join('')}</ul>
+</div>
+</div>
 </div>
 </header>
 
@@ -198,7 +200,7 @@ ${W.html}
 <form class="wrap tools" role="search" aria-label="Filter the map" onsubmit="return false">
 <div class="search"><label for="q">Search the map</label><input id="q" name="q" type="search" autocomplete="off" placeholder="Try x402, Okta, receipts"></div>
 <fieldset class="chips"><legend>Category</legend>
-<label class="chip"><input type="radio" name="cat" value="" checked> All</label>
+<label class="chip on"><input type="radio" name="cat" value="" checked> All</label>
 ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="radio" name="cat" value="${esc(c)}"> ${esc(CAT_LABEL[c])} <span class="n">${n}</span></label>`).join('\n')}
 </fieldset>
 <div class="toggles">
