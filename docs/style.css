@@ -162,8 +162,7 @@ html.motion .cloud:not(.settled) .entry:nth-child(3n) { transform: translate(30p
 .merge .to { background: var(--deal); color: #fff; }
 .merge .arrow { font-weight: 400; color: var(--ink2); }
 html.motion .tape .merge .from { transition: transform 1s cubic-bezier(.5,0,.2,1) .3s; }
-html.motion .tape:not(.settled) .merge .from { transform: translateX(-14px); }
-html.motion .tape.settled .merge .from { transform: translateX(6px); }
+html.motion .tape.settled .merge .from { transform: translateX(10px); }
 
 /* ---------- about + footer ---------- */
 .about .cols { display: grid; gap: 28px; }
