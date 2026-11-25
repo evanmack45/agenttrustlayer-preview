@@ -100,31 +100,45 @@
   }
   window.addEventListener('hashchange', openFromHash);
 
-  // ---- scroll story: light the packet line for the gate in view ----
-  const lines = $$('.pk-lines li');
-  const packet = $('#packet');
-  if ('IntersectionObserver' in window) {
-    const gateIO = new IntersectionObserver((items) => {
-      for (const it of items) {
-        if (!it.isIntersecting) continue;
-        const n = +it.target.dataset.gate;
-        lines.forEach((l) => l.classList.toggle('on', +l.dataset.gate <= n));
-        lines.forEach((l) => l.classList.toggle('now', +l.dataset.gate === n));
-        packet.dataset.gate = n;
-        const cur = lines[n - 1];
-        $('#pk-now').textContent = `Gate ${n}: ${cur.querySelector('.pk-k').textContent}`;
-        if (!reduce) { packet.classList.remove('pulse'); void packet.offsetWidth; packet.classList.add('pulse'); }
-      }
-    }, { rootMargin: '-45% 0px -50% 0px' });
-    $$('.gate').forEach((g) => gateIO.observe(g));
-
-    if (!reduce) {
-      document.documentElement.classList.add('motion');
-      const revealIO = new IntersectionObserver((items) => {
-        for (const it of items) if (it.isIntersecting) { it.target.classList.add('settled'); revealIO.unobserve(it.target); }
-      }, { rootMargin: '0px 0px -15% 0px' });
-      $$('.cloud, .tape').forEach((c) => revealIO.observe(c));
-    }
+  // ---- the hero story: one request, step by step ----
+  const stage = $('#stage');
+  const gs = $$('.track .g');
+  const stamps = $$('.stamps li');
+  function setStep(n) {
+    if (stage.dataset.step === String(n)) return;
+    stage.dataset.step = n;
+    gs.forEach((g) => {
+      const k = +g.dataset.g;
+      g.classList.toggle('is-active', k === n);
+      g.classList.toggle('is-passed', k < n);
+    });
+    stamps.forEach((s) => {
+      const on = +s.dataset.g <= n;
+      if (on && !s.classList.contains('on')) { s.classList.add('stamp'); setTimeout(() => s.classList.remove('stamp'), 600); }
+      s.classList.toggle('on', on);
+    });
+  }
+  if (!reduce && 'IntersectionObserver' in window) {
+    document.documentElement.classList.add('story');
+    setStep(1);
+    const io = new IntersectionObserver((items) => {
+      for (const it of items) if (it.isIntersecting) setStep(+it.target.dataset.step);
+    }, { rootMargin: '-50% 0px -50% 0px' });
+    $$('.steps .step').forEach((s) => io.observe(s));
+    const req = $('#request');
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const r = req.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+        stage.style.setProperty('--p', p.toFixed(3));
+        ticking = false;
+      });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   }
 
   // ---- start ----

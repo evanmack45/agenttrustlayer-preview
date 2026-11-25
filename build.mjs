@@ -1,6 +1,6 @@
 // Build the static map from ../data/*.json into docs/. No dependencies.
 // Usage: node build.mjs [--data ../data] [--out docs] [--base https://.../]
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,6 +84,7 @@ const specs = entries.filter((e) => e.kind === 'standard' || e.kind === 'protoco
 });
 
 // ---------- rendering ----------
+const SHORT = { identity: 'Identity', 'auth/permissions': 'Permissions', 'payments/commerce': 'Payments', verification: 'Proof' };
 function entryHTML(e) {
   const os = e.open_source === true ? '<span class="tag tag-os">Open source</span>' : e.open_source === false ? '<span class="tag">Not open source</span>' : '';
   const text = [e.name, e.description, e.kind, CAT_LABEL[e.category], e.note || '', verLabel(e.verification)].join(' ').toLowerCase();
@@ -91,8 +92,8 @@ function entryHTML(e) {
   return `<li class="entry c-${CAT_KEY[e.category]}" id="e-${esc(e.id)}" data-cat="${esc(e.category)}" data-os="${e.open_source === true ? 1 : 0}" data-day="${recentable}" data-text="${esc(text)}">
 <details><summary><span class="e-name">${esc(e.name)}</span> <span class="e-kind">${esc(e.kind)}</span></summary>
 <div class="e-body"><p>${esc(e.description)}</p>${e.note ? `<p class="e-note"><b>Note.</b> ${esc(e.note)}</p>` : ''}
-<p class="e-links">${e.url && e.url !== e.source_url ? `<a href="${esc(e.url)}" rel="noopener">Project page (${esc(host(e.url))})</a> · ` : ''}<a href="#e-${esc(e.id)}" class="permalink" data-id="${esc(e.id)}">Link to this entry</a></p></div></details>
-<p class="e-meta"><span class="${e.source_date ? '' : 'nodate'}">${e.source_date ? 'Dated ' : ''}${esc(fmtDate(e.source_date))}</span> · <span>checked ${esc(fmtDate(e.last_checked))}</span> · <a class="src" href="${esc(e.source_url)}" rel="noopener">${esc(verLabel(e.verification))}<span class="vh">, source on ${esc(host(e.source_url))}</span></a>${os ? ' · ' + os : ''}</p></li>`;
+<p class="e-links">${e.url && e.url !== e.source_url ? `<a href="${esc(e.url)}" rel="noopener">Project page (${esc(host(e.url))})</a> <span class="sep" aria-hidden="true">/</span> ` : ''}<a href="#e-${esc(e.id)}" class="permalink" data-id="${esc(e.id)}">Link to this entry</a></p></div></details>
+<p class="e-meta"><span class="${e.source_date ? 'when' : 'when nodate'}">${e.source_date ? 'Dated ' : ''}${esc(fmtDate(e.source_date))}</span><span>checked ${esc(fmtDate(e.last_checked))}</span><a class="src" href="${esc(e.source_url)}" rel="noopener">${esc(verLabel(e.verification))}<span class="vh">, source on ${esc(host(e.source_url))}</span></a>${os}</p></li>`;
 }
 const listHTML = (list, cls = '') => `<ol class="entries ${cls}">${sortEntries(list).map(entryHTML).join('\n')}</ol>`;
 const emptyHTML = `<p class="empty" hidden>No entries here match. <button type="button" class="linkbtn js-clear">Clear filters</button></p>`;
@@ -100,36 +101,33 @@ const emptyHTML = `<p class="empty" hidden>No entries here match. <button type="
 function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
   return `<section class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" aria-labelledby="gate-${g.n}-h">
-<div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><div><h2 id="gate-${g.n}-h">${esc(g.q)}</h2>
-<p class="gate-sub">${esc(g.plain)}. The request now carries ${esc(g.carries)}. Examples: ${g.ex.map(([id, label]) => `<a href="#e-${id}">${esc(label)}</a>`).join(', ')}.</p>
-<p class="count" aria-live="polite"><span class="shown">${list.length}</span> of ${list.length} entries</p></div></div>
-${listHTML(list, 'cloud')}${emptyHTML}</section>`;
+<div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
+<p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
+<p class="count" aria-live="polite"><span class="shown">${list.length}</span> of ${list.length} shown</p></div></div>
+${listHTML(list)}${emptyHTML}</section>`;
 }
 
 function ribbonHTML() {
-  const rows = specs.map(({ e, gates }) => `<tr class="c-${CAT_KEY[e.category]}" data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g, i) => `<td class="${[g.hit && 'hit', g.home && 'home', g.hit && (gates[i - 1]?.hit || gates[i + 1]?.hit) && 'join'].filter(Boolean).join(' ')}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
-  return `<div class="ribbon-wrap"><table class="ribbon"><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}"><span class="gn">${g.n}</span> ${esc(g.plain.split(' ')[0])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const rows = specs.map(({ e, gates }) => `<tr data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g, i) => `<td class="${[g.hit && 'hit', g.home && 'home', g.hit && (gates[i - 1]?.hit || gates[i + 1]?.hit) && 'join'].filter(Boolean).join(' ')}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
+  return `<div class="ribbon-wrap"><table class="ribbon"><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}">${g.n} ${esc(SHORT[g.cat])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-// Deal tape: one column per month, empty months kept so the gaps are honest.
 function tapeHTML() {
   const months = [];
   const asc = [...events].sort((a, b) => a.date.localeCompare(b.date));
   let [y, m] = asc[0].date.split('-').map(Number);
   const [ly, lm] = asc.at(-1).date.split('-').map(Number);
   while (y < ly || (y === ly && m <= lm)) { months.push(`${y}-${String(m).padStart(2, '0')}`); m++; if (m > 12) { m = 1; y++; } }
-  const cols = months.map((mo) => {
+  return `<ol class="tape">${months.map((mo) => {
     const evs = asc.filter((e) => e.date.startsWith(mo));
     const [yy, mm] = mo.split('-').map(Number);
     return `<li class="month${evs.length ? '' : ' quiet'}"><p class="mo">${MON[mm - 1]} ${yy}</p>${evs.length ? `<ol>${evs.map((ev) => {
       const mg = mergeFor(ev);
-      return `<li class="ev c-${EVENT_KEY[ev.type]}"><p class="ev-d">${esc(fmtDate(ev.date))} · ${EVENT_LABEL[ev.type]}</p>${mg ? `<p class="merge" aria-label="${esc(mg.fromFull)} joins ${esc(mg.to)}"><span class="from">${esc(mg.fromFull)}</span><span class="arrow" aria-hidden="true">into</span><span class="to">${esc(mg.to)}</span></p>` : ''}<p class="ev-t"><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></p></li>`;
+      return `<li class="ev c-${EVENT_KEY[ev.type]}"><p class="ev-d"><span class="ev-type">${EVENT_LABEL[ev.type]}</span> ${esc(fmtDate(ev.date))}</p>${mg ? `<p class="merge-static"><span class="from">${esc(mg.fromFull)}</span> is now part of <span class="to">${esc(mg.to)}</span></p>` : ''}<p class="ev-t"><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></p></li>`;
     }).join('')}</ol>` : '<p class="none">No dated events</p>'}</li>`;
-  }).join('');
-  return `<ol class="tape" style="--months:${months.length}">${cols}</ol>`;
+  }).join('')}</ol>`;
 }
 
-// Week strip: one column per week, one square per dated event.
 function weeksHTML() {
   const DAY = 864e5;
   const end = Date.parse(generated + 'T12:00:00Z');
@@ -138,9 +136,32 @@ function weeksHTML() {
   const nWeeks = Math.floor((end - start) / (7 * DAY)) + 1;
   const weeks = Array.from({ length: nWeeks }, () => []);
   for (const ev of asc) weeks[nWeeks - 1 - Math.floor((end - Date.parse(ev.date + 'T12:00:00Z')) / (7 * DAY))].push(ev);
-  const busy = weeks.filter((w) => w.length).length;
-  return { nWeeks, busy, html: `<ol class="weeks" aria-hidden="true">${weeks.map((w) => `<li>${w.map((ev) => `<span class="sq c-${EVENT_KEY[ev.type]}" title="${esc(fmtDate(ev.date) + ': ' + ev.title)}"></span>`).join('')}</li>`).join('')}</ol>` };
+  return { nWeeks, html: `<ol class="weeks" aria-hidden="true">${weeks.map((w) => `<li>${w.map((ev) => `<span class="sq c-${EVENT_KEY[ev.type]}"></span>`).join('')}</li>`).join('')}</ol>` };
 }
+
+// ---------- the hero: "The Request" ----------
+const stampText = (g) => g.ex.map(([id, l]) => l).join(' / ');
+function heroGate(g) {
+  const list = sortEntries(entries.filter((e) => e.category === g.cat));
+  return `<li class="g c-${g.key}" data-g="${g.n}">
+<div class="g-head"><span class="g-n" aria-hidden="true">${g.n}</span><h2 class="g-q">${esc(g.q)}</h2><span class="g-count"><b>${list.length}</b> <span>${esc(SHORT[g.cat].toLowerCase())}</span></span></div>
+<ul class="g-dots" aria-hidden="true">${list.map(() => '<li></li>').join('')}</ul>
+<div class="g-more"><div class="g-inner">
+<p class="g-carry">The request now carries ${esc(g.carries)}, for example ${g.ex.map(([id, l]) => `<a href="#e-${id}">${esc(l)}</a>`).join(' or ')}.</p>
+<ul class="g-names">${list.map((e, i) => `<li style="--i:${i}"><a href="#e-${esc(e.id)}">${esc(e.name.replace(/ \(now part of .+\)$/, ''))}</a></li>`).join('')}</ul>
+</div></div></li>`;
+}
+const dealEvents = events.filter((e) => e.type === 'deal');
+const mergeRows = dealEvents.map((ev) => ({ ev, mg: mergeFor(ev) })).filter((x) => x.mg);
+const pending = dealEvents.filter((ev) => !mergeFor(ev) && /acquire/i.test(ev.title));
+const heroDeals = `<li class="g g-deal" data-g="5">
+<div class="g-head"><span class="g-n" aria-hidden="true">5</span><h2 class="g-q">Who buys whom?</h2><span class="g-count"><b>${mergeRows.length}</b> <span>closed</span></span></div>
+<ul class="g-dots" aria-hidden="true">${mergeRows.map(() => '<li></li>').join('')}</ul>
+<div class="g-more"><div class="g-inner">
+<p class="g-carry">Big platforms are buying the companies that check agents. Each line links its source.</p>
+<ol class="merges">${mergeRows.map(({ ev, mg }, i) => `<li style="--i:${i}"><span class="m-pair"><span class="m-from">${esc(mg.from)}</span><span class="m-to">${esc(mg.to)}</span></span><a class="m-src" href="${esc(ev.source_url)}" rel="noopener">${esc(fmtDate(ev.date))}<span class="vh">: ${esc(ev.title)}</span></a></li>`).join('')}
+${pending.map((ev) => `<li class="pending"><span class="m-pair"><span class="m-from">${esc(ev.title.match(/acquire (\w+)/i)?.[1] || '')}</span><span class="m-to">${esc(ev.title.split(' ')[0])}</span></span><a class="m-src" href="${esc(ev.source_url)}" rel="noopener">Announced ${esc(fmtDate(ev.date))}, not closed<span class="vh">: ${esc(ev.title)}</span></a></li>`).join('')}</ol>
+</div></div></li>`;
 
 const weekCut = new Date(Date.parse(generated + 'T12:00:00Z') - 7 * 864e5).toISOString().slice(0, 10);
 const thisWeek = events.filter((e) => e.date >= weekCut);
@@ -158,46 +179,66 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Agent Trust Layer: a living map of AI agent identity, permissions, payments and proof</title>
+<title>Agent Trust Layer: how an AI agent gets trusted, gate by gate</title>
 <meta name="description" content="${esc(desc)}">
-<meta property="og:title" content="Agent Trust Layer: a living map">
+<meta property="og:title" content="Agent Trust Layer: how an AI agent gets trusted">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(BASE)}">
 <meta property="og:image" content="${esc(BASE)}og.png">
-<meta property="og:image:alt" content="The four gates an AI agent request passes: who are you, what may you do, can you pay, can we prove what you did.">
+<meta property="og:image:alt" content="One agent request passes four gates: who are you, what may you do, can you pay, can we prove what you did.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0d1321">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230d1321'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%23ffffff'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1f2bd1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/json" href="data/entries.json" title="Map entries">
 <link rel="stylesheet" href="style.css">
 <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
-<a class="skip" href="#map">Skip to the map</a>
-<header class="top">
-<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#gate-1">Gates</a><a href="#specs">Specs</a><a href="#deals">Deals</a><a href="#about">About</a></span></nav>
-<div class="wrap hero">
-<div class="hero-text">
-<h1>How an AI agent gets trusted, one gate at a time</h1>
-<p class="dek">When an AI agent shows up at a website, an API or a checkout, four questions come up. Who are you? What may you do? Can you pay? Can we prove what you did? This map lists the standards, products, open-source projects and deals working on each question. Every entry has a date and a link to its source.</p>
-<p class="facts"><b>${entries.length}</b> entries · <b>${osCount}</b> open source · <b>${events.length}</b> dated events · last checked <b>${esc(fmtDate(generated))}</b></p>
+<a class="skip" href="#map">Skip to the full map</a>
+<header class="hero">
+<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#map">Map</a><a href="#deals">Deals</a><a href="#about">About</a></span></nav>
+<div class="wrap intro">
+<h1>How an AI agent gets trusted</h1>
+<p class="dek">Follow one request through four checks. Every name links its source.</p>
 </div>
-<div class="hero-side">
-<div class="pace">
-<p class="pace-h"><b>${events.length} dated events in ${W.nWeeks} weeks.</b> Each square is one event. Each column is one week, oldest on the left.</p>
-${W.html}
-<p class="legend"><span class="sq c-std"></span> Standard <span class="sq c-deal"></span> Deal <span class="sq c-prod"></span> Product</p>
+<section class="request" id="request" aria-label="One agent request, gate by gate">
+<div class="stage" id="stage" data-step="all">
+<div class="wrap stage-in">
+<div class="ticket" aria-hidden="true">
+<p class="t-h"><span class="t-chip">Request</span> <span class="t-path">agent → shop.example</span></p>
+<ol class="stamps">${GATES.map((g) => `<li class="c-${g.key}" data-g="${g.n}"><span class="s-k">${esc(g.line)}</span><span class="s-v">${esc(stampText(g))}</span></li>`).join('')}</ol>
+<p class="t-note">Illustration. Real requests use different header names.</p>
 </div>
-<div class="week">
-<h2 class="small-h">What changed in the 7 days to ${esc(fmtDate(generated))}</h2>
-<ul class="week-list">${thisWeek.map((ev) => `<li class="c-${EVENT_KEY[ev.type]}"><span class="wd">${esc(fmtDate(ev.date).replace(/, \d{4}$/, ''))}</span> <a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></li>`).join('')}</ul>
+<ol class="track">
+${GATES.map(heroGate).join('\n')}
+${heroDeals}
+</ol>
+<div class="meter" aria-hidden="true"><span></span></div>
 </div>
 </div>
-</div>
+<div class="steps" aria-hidden="true">${[1, 2, 3, 4, 5].map((n) => `<div class="step" data-step="${n}"></div>`).join('')}</div>
+</section>
 </header>
 
 <main id="map">
+<section class="wrap week" aria-labelledby="week-h">
+<div class="week-grid">
+<div>
+<h2 id="week-h">This week</h2>
+<p class="lede">Dated events in the 7 days to ${esc(fmtDate(generated))}.</p>
+<ul class="week-list">${thisWeek.map((ev) => `<li class="c-${EVENT_KEY[ev.type]}"><span class="wd">${esc(fmtDate(ev.date).replace(/, \d{4}$/, ''))}</span><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></li>`).join('')}</ul>
+</div>
+<figure class="pace">
+${W.html}
+<figcaption><b>${events.length} dated events in ${W.nWeeks} weeks.</b> One square per event, one column per week, oldest on the left. <span class="legend"><span class="sq c-std"></span>Standard <span class="sq c-deal"></span>Deal <span class="sq c-prod"></span>Product</span></figcaption>
+</figure>
+</div>
+</section>
+
+<div class="wrap full-h"><h2>The full map</h2><p class="lede">${entries.length} entries. ${osCount} are open source. Inside each gate, the order is by date, newest first.</p></div>
 <form class="wrap tools" role="search" aria-label="Filter the map" onsubmit="return false">
 <div class="search"><label for="q">Search the map</label><input id="q" name="q" type="search" autocomplete="off" placeholder="Try x402, Okta, receipts"></div>
 <fieldset class="chips"><legend>Category</legend>
@@ -212,20 +253,8 @@ ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="ra
 <p class="none-all" id="none-all" hidden>Nothing matches <b id="none-q"></b>. Check the spelling or <button type="button" class="linkbtn js-clear">clear filters</button>.</p>
 </form>
 
-<div class="wrap journey">
-<aside class="rail" aria-label="The request, gate by gate">
-<div class="packet" id="packet">
-<p class="pk-h">One agent request</p>
-<ol class="pk-lines">
-${GATES.map((g) => `<li class="c-${g.key}" data-gate="${g.n}"><span class="pin" aria-hidden="true">${g.n}</span><span class="pk-k">${esc(g.line)}</span><span class="pk-v">${g.ex.map(([, l]) => esc(l)).join(' / ')}</span></li>`).join('')}
-</ol>
-<p class="pk-now" id="pk-now" aria-hidden="true"></p>
-<p class="pk-foot">An illustration, not a real header format. Names are examples from the map.</p>
-</div>
-</aside>
-<div class="gates">
+<div class="wrap gates">
 ${GATES.map(gateHTML).join('\n')}
-</div>
 </div>
 
 <section class="wrap block" id="specs" aria-labelledby="specs-h">
@@ -237,7 +266,7 @@ ${ribbonHTML()}
 
 <section class="wrap block" id="deals" aria-labelledby="deals-h">
 <h2 id="deals-h">The deal tape</h2>
-<p class="lede">Every dated event in the map, by month. Months with no event stay on the tape, so the gaps are real. When a buyer closes an acquisition, the bought company merges into the buyer.</p>
+<p class="lede">Every dated event in the map, by month. Months with no event stay on the tape, so the gaps are real.</p>
 ${tapeHTML()}
 <div class="std-list c-deal" data-gate="deal"><h3>Deals in the map (${entries.filter((e) => e.category === 'deals').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'deals'))}${emptyHTML}</div>
 </section>
@@ -250,18 +279,18 @@ ${tapeHTML()}
 <dl class="labels">
 <dt>Primary source</dt><dd>The standards body, project or company that did the thing published it.</dd>
 <dt>Secondary source</dt><dd>A news site or other third party reported it.</dd>
-<dt>Vendor's own claim / reported by the vendor</dt><dd>The company describes itself. Nobody else checked it.</dd>
+<dt>Vendor's own claim, or reported by the vendor</dt><dd>The company describes itself. Nobody else checked it.</dd>
 <dt>GitHub repo data</dt><dd>License, stars and last push come from the GitHub API. For these entries the date is the last push, in UTC, so it can read one day after the check date. Stars are a count, not a score.</dd>
 <dt>Date not captured</dt><dd>The source had no date we could confirm.</dd>
 </dl>
 </div>
 <div>
 <h3>What this map is not</h3>
-<p>It does not rank, rate, certify or recommend anything. Order inside a gate is newest first. Nobody paid to be listed. Leads that could not be confirmed from a source are left out.</p>
+<p>It does not rank, rate, certify or recommend anything. Nobody paid to be listed. Leads that could not be confirmed from a source are left out.</p>
 <h3>About the phrase "trust layer"</h3>
 <p>Several vendors and projects describe themselves this way, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce uses <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> for something else. It means protecting data sent to language models. This site is not connected to any of them.</p>
 <h3>Read the data yourself</h3>
-<p>The map is built from two files: <a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a>. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
+<p>The map is built from two files, <a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a>. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
 </div>
 </div>
 </section>
@@ -277,10 +306,10 @@ ${tapeHTML()}
 `;
 
 mkdirSync(join(OUT, 'data'), { recursive: true });
+mkdirSync(join(OUT, 'fonts'), { recursive: true });
 writeFileSync(join(OUT, 'index.html'), html);
-copyFileSync(join(here, 'src', 'style.css'), join(OUT, 'style.css'));
-copyFileSync(join(here, 'src', 'app.js'), join(OUT, 'app.js'));
-copyFileSync(join(here, 'src', 'og.png'), join(OUT, 'og.png'));
+for (const f of ['style.css', 'app.js', 'og.png']) copyFileSync(join(here, 'src', f), join(OUT, f));
+for (const f of readdirSync(join(here, 'src', 'fonts'))) copyFileSync(join(here, 'src', 'fonts', f), join(OUT, 'fonts', f));
 writeFileSync(join(OUT, 'data', 'entries.json'), JSON.stringify(entriesDoc, null, 2) + '\n');
 // Publish the changelog without the unverified leads.
 const { unverified_leads_not_published, ...publicLog } = changelogDoc;
@@ -300,4 +329,4 @@ The map groups entries by four questions an AI agent request meets: who are you 
 ## Entries by category
 ${catCounts.map(([c, n]) => `- ${c}: ${n}`).join('\n')}
 `);
-console.log(`built ${OUT}: ${entries.length} entries, ${events.length} events, ${specs.length} specs, ${merges.length} merges, ${thisWeek.length} this week`);
+console.log(`built ${OUT}: ${entries.length} entries, ${events.length} events, ${specs.length} specs, ${mergeRows.length} merges, ${pending.length} pending, ${thisWeek.length} this week`);
