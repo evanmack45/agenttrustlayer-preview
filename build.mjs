@@ -101,7 +101,7 @@ const emptyHTML = `<p class="empty" hidden>No entries here match. <button type="
 function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
   return `<section class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" aria-labelledby="gate-${g.n}-h">
-<div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
+<div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><img class="gate-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
 <p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
 <p class="count" aria-live="polite"><span class="shown">${list.length}</span> of ${list.length} shown</p></div></div>
 ${listHTML(list)}${emptyHTML}</section>`;
@@ -144,7 +144,7 @@ const stampText = (g) => g.ex.map(([id, l]) => l).join(' / ');
 function heroGate(g) {
   const list = sortEntries(entries.filter((e) => e.category === g.cat));
   return `<li class="g c-${g.key}" data-g="${g.n}">
-<div class="g-head"><span class="g-n" aria-hidden="true">${g.n}</span><h2 class="g-q">${esc(g.q)}</h2><span class="g-count"><b>${list.length}</b> <span>${esc(SHORT[g.cat].toLowerCase())}</span></span></div>
+<div class="g-head"><span class="g-n" aria-hidden="true">${g.n}</span><img class="g-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="48" height="50" alt="" decoding="async"><h2 class="g-q">${esc(g.q)}</h2><span class="g-count"><b>${list.length}</b> <span>${esc(SHORT[g.cat].toLowerCase())}</span></span></div>
 <ul class="g-dots" aria-hidden="true">${list.map(() => '<li></li>').join('')}</ul>
 <div class="g-more"><div class="g-inner">
 <p class="g-carry">The request now carries ${esc(g.carries)}, for example ${g.ex.map(([id, l]) => `<a href="#e-${id}">${esc(l)}</a>`).join(' or ')}.</p>
@@ -155,7 +155,7 @@ const dealEvents = events.filter((e) => e.type === 'deal');
 const mergeRows = dealEvents.map((ev) => ({ ev, mg: mergeFor(ev) })).filter((x) => x.mg);
 const pending = dealEvents.filter((ev) => !mergeFor(ev) && /acquire/i.test(ev.title));
 const heroDeals = `<li class="g g-deal" data-g="5">
-<div class="g-head"><span class="g-n" aria-hidden="true">5</span><h2 class="g-q">Who buys whom?</h2><span class="g-count"><b>${mergeRows.length}</b> <span>closed</span></span></div>
+<div class="g-head"><span class="g-n" aria-hidden="true">5</span><img class="g-emblem" src="img/emblem-deals.webp" width="48" height="50" alt="" decoding="async"><h2 class="g-q">Who buys whom?</h2><span class="g-count"><b>${mergeRows.length}</b> <span>closed</span></span></div>
 <ul class="g-dots" aria-hidden="true">${mergeRows.map(() => '<li></li>').join('')}</ul>
 <div class="g-more"><div class="g-inner">
 <p class="g-carry">Big platforms are buying the companies that check agents. Each line links its source.</p>
@@ -185,8 +185,11 @@ const html = `<!doctype html>
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(BASE)}">
-<meta property="og:image" content="${esc(BASE)}og.png">
-<meta property="og:image:alt" content="One agent request passes four gates: who are you, what may you do, can you pay, can we prove what you did.">
+<meta property="og:image" content="${esc(BASE)}og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A large ornate brass key lying across a compass rose over a faint chart grid with dotted routes and beacon points.">
+<link rel="preload" as="image" href="img/hero.webp" imagesrcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" imagesizes="100vw">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1f2bd1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
@@ -200,9 +203,12 @@ const html = `<!doctype html>
 <a class="skip" href="#map">Skip to the full map</a>
 <header class="hero">
 <nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#map">Map</a><a href="#deals">Deals</a><a href="#about">About</a></span></nav>
-<div class="wrap intro">
+<div class="intro">
+<img class="intro-art" src="img/hero.webp" srcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" sizes="100vw" width="1280" height="714" alt="Antique star-and-sea chart with islands of contour lines, brass keys, wax seals and lighthouses linked by dotted and gold routes, an armillary sphere and compass rose at right." fetchpriority="high" decoding="async">
+<div class="wrap intro-copy">
 <h1>How an AI agent gets trusted</h1>
 <p class="dek">Follow one request through four checks. Every name links its source.</p>
+</div>
 </div>
 <section class="request" id="request" aria-label="One agent request, gate by gate">
 <div class="stage" id="stage" data-step="all">
@@ -222,6 +228,10 @@ ${heroDeals}
 <div class="steps" aria-hidden="true">${[1, 2, 3, 4, 5].map((n) => `<div class="step" data-step="${n}"></div>`).join('')}</div>
 </section>
 </header>
+
+<div class="map-banner-wrap">
+<img class="map-banner" src="img/banner.webp" srcset="img/banner-800.webp 800w, img/banner.webp 1280w, img/banner-1600.webp 1584w" sizes="100vw" width="1280" height="364" alt="A ribbon of dotted sea routes winding past tiny lighthouses, brass keys and anchor wax seals on cream vellum." loading="lazy" decoding="async">
+</div>
 
 <main id="map">
 <section class="wrap week" aria-labelledby="week-h">
@@ -258,14 +268,14 @@ ${GATES.map(gateHTML).join('\n')}
 </div>
 
 <section class="wrap block" id="specs" aria-labelledby="specs-h">
-<h2 id="specs-h">The specs underneath</h2>
+<h2 id="specs-h"><img class="sec-emblem" src="img/emblem-standards.webp" width="48" height="50" alt="" decoding="async"> The specs underneath</h2>
 <p class="lede">Standards and protocols often reach past one gate. A filled dot marks the gate where the map lists the spec. A ring marks another gate that the spec's own one-line description names, by words such as "identity", "authorization", "payments" or "verify". The rule is mechanical, so read each spec before you rely on it.</p>
 ${ribbonHTML()}
 <div class="std-list c-std" data-gate="std"><h3>Cross-gate standards (${entries.filter((e) => e.category === 'standards').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'standards'))}${emptyHTML}</div>
 </section>
 
 <section class="wrap block" id="deals" aria-labelledby="deals-h">
-<h2 id="deals-h">The deal tape</h2>
+<h2 id="deals-h"><img class="sec-emblem" src="img/emblem-deals.webp" width="48" height="50" alt="" decoding="async"> The deal tape</h2>
 <p class="lede">Every dated event in the map, by month. Months with no event stay on the tape, so the gaps are real.</p>
 ${tapeHTML()}
 <div class="std-list c-deal" data-gate="deal"><h3>Deals in the map (${entries.filter((e) => e.category === 'deals').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'deals'))}${emptyHTML}</div>
@@ -308,7 +318,10 @@ ${tapeHTML()}
 mkdirSync(join(OUT, 'data'), { recursive: true });
 mkdirSync(join(OUT, 'fonts'), { recursive: true });
 writeFileSync(join(OUT, 'index.html'), html);
-for (const f of ['style.css', 'app.js', 'og.png']) copyFileSync(join(here, 'src', f), join(OUT, f));
+for (const f of ['style.css', 'app.js']) copyFileSync(join(here, 'src', f), join(OUT, f));
+mkdirSync(join(OUT, 'img'), { recursive: true });
+for (const f of readdirSync(join(here, 'src', 'img'))) copyFileSync(join(here, 'src', 'img', f), join(OUT, 'img', f));
+copyFileSync(join(here, 'src', 'img', 'og.jpg'), join(OUT, 'og.jpg'));
 for (const f of readdirSync(join(here, 'src', 'fonts'))) copyFileSync(join(here, 'src', 'fonts', f), join(OUT, 'fonts', f));
 writeFileSync(join(OUT, 'data', 'entries.json'), JSON.stringify(entriesDoc, null, 2) + '\n');
 // Publish the changelog without the unverified leads.
