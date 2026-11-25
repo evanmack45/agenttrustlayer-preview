@@ -50,14 +50,16 @@ p, li, dd { text-wrap: pretty; }
 .stage-in { display: grid; gap: 12px; padding-top: 10px; padding-bottom: 28px; }
 
 /* ticket: the request */
-.ticket { background: var(--white); color: var(--ink); border-radius: 10px; padding: 10px 12px 12px; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
-.t-h { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
+.ticket { background: #eadfc4 url(img/ticket-strip.webp) top center / 100% 100% no-repeat; aspect-ratio: 780 / 399; color: var(--ink); border-radius: 8px; padding: 30px 22px 12px 24px; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.t-h { margin: 0 0 8px 34px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
 .t-chip { font: 700 13px var(--display); background: var(--ink); color: var(--lime); padding: 2px 8px; border-radius: 4px; }
 .t-path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stamps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.stamps li { font-size: 13px; line-height: 1.3; color: var(--ink2); border-top: 4px solid var(--line); padding-top: 5px; }
+.stamps li { font-size: 13px; line-height: 1.3; color: #2c343e; display: grid; justify-items: center; text-align: center; gap: 1px; }
+.s-seal { width: 56px; height: 56px; display: block; opacity: .38; filter: grayscale(1); transition: opacity .3s, filter .3s; }
+.stamps li.on .s-seal, .stage[data-step="all"] .stamps li .s-seal { opacity: 1; filter: none; }
 .stamps .s-v { display: none; }
-.stamps li.on { color: var(--ink); border-top-color: var(--c); }
+.stamps li.on { color: var(--ink); }
 .stamps li.on .s-k { font-weight: 700; }
 .t-note { display: none; }
 
@@ -120,7 +122,7 @@ html.story .stamps li.on.stamp { animation: stamp .5s cubic-bezier(.2,.9,.3,1.3)
 /* static mode (no JS, reduced motion): everything open */
 .stage[data-step="all"] .g-more { grid-template-rows: 1fr; visibility: visible; }
 .stage[data-step="all"] .g-dots li { background: var(--cb, #fff); }
-.stage[data-step="all"] .stamps li { color: var(--ink); border-top-color: var(--c); }
+.stage[data-step="all"] .stamps li { color: var(--ink); }
 
 /* ================= paper sections ================= */
 .week { padding-top: 48px; }
@@ -241,14 +243,13 @@ html.story .stamps li.on.stamp { animation: stamp .5s cubic-bezier(.2,.9,.3,1.3)
   .dek { font-size: 21px; max-width: 26ch; margin-bottom: 8px; }
   .stage-in { grid-template-columns: 290px minmax(0, 1fr); column-gap: 40px; padding-top: 24px; }
   html.story .stage-in { grid-template-rows: 1fr auto; align-content: stretch; }
-  .ticket { align-self: start; padding: 18px 18px 16px; border-radius: 14px; grid-row: 1; }
-  .t-h { font-size: 14px; margin-bottom: 14px; }
+  .ticket { align-self: start; aspect-ratio: 627 / 931; background-image: url(img/ticket.webp); padding: 56px 26px 36px 34px; border-radius: 10px; grid-row: 1; }
+  .t-h { font-size: 13px; gap: 6px; margin: 0 0 14px 22px; }
   .stamps { grid-template-columns: 1fr; gap: 8px; }
-  .stamps li { border-top: 0; display: grid; grid-template-columns: 14px 1fr; column-gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 15px; }
-  .stamps li::before { content: ""; grid-row: span 2; width: 14px; height: 14px; margin-top: 3px; border-radius: 3px; border: 2px solid var(--line); }
-  .stamps li.on::before, .stage[data-step="all"] .stamps li::before { background: var(--c); border-color: var(--c); }
+  .stamps li { display: grid; grid-template-columns: 56px 1fr; column-gap: 10px; align-items: center; justify-items: start; text-align: left; padding: 2px 0; font-size: 15px; }
+  .s-seal { grid-row: span 2; width: 56px; height: 56px; }
   .stamps .s-v { display: block; color: var(--ink2); font-size: 14px; }
-  .stamps li:not(.on) .s-v { color: #6b7380; }
+  .stamps li:not(.on) .s-v { color: #555c66; }
   .stage[data-step="all"] .stamps li .s-v { color: var(--ink2); }
   .t-note { display: block; margin: 12px 0 0; font-size: 13px; color: var(--ink2); }
   .track { display: flex; gap: 0; align-items: stretch; grid-column: 2; grid-row: 1; min-height: 0; }

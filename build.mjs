@@ -29,6 +29,7 @@ for (const e of entries) {
 for (const ev of events) if (!ev.date || !ev.title || !/^https?:\/\//.test(ev.source_url || '')) throw new Error(`event bad: ${ev.title}`);
 
 // ---------- domain model ----------
+const SEAL = { id: 'identity', auth: 'grant', pay: 'payment', ver: 'receipt' };
 const GATES = [
   { n: 1, cat: 'identity', key: 'id', q: 'Who are you?', plain: 'Identity', carries: 'a signed key that names the agent and its operator',
     ex: [['web-bot-auth', 'Web Bot Auth'], ['agent-name-service-ans', 'ANS']], line: 'signed identity',
@@ -215,7 +216,7 @@ const html = `<!doctype html>
 <div class="wrap stage-in">
 <div class="ticket" aria-hidden="true">
 <p class="t-h"><span class="t-chip">Request</span> <span class="t-path">agent → shop.example</span></p>
-<ol class="stamps">${GATES.map((g) => `<li class="c-${g.key}" data-g="${g.n}"><span class="s-k">${esc(g.line)}</span><span class="s-v">${esc(stampText(g))}</span></li>`).join('')}</ol>
+<ol class="stamps">${GATES.map((g) => `<li class="c-${g.key}" data-g="${g.n}"><img class="s-seal" src="img/seal-${SEAL[g.key]}.webp" width="144" height="144" alt="" decoding="async"><span class="s-k">${esc(g.line)}</span><span class="s-v">${esc(stampText(g))}</span></li>`).join('')}</ol>
 <p class="t-note">Illustration. Real requests use different header names.</p>
 </div>
 <ol class="track">
