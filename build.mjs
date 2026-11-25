@@ -259,7 +259,7 @@ ${tapeHTML()}
 <h3>What this map is not</h3>
 <p>It does not rank, rate, certify or recommend anything. Order inside a gate is newest first. Nobody paid to be listed. Leads that could not be confirmed from a source are left out.</p>
 <h3>About the phrase "trust layer"</h3>
-<p>Several vendors and projects describe themselves this way, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce uses <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> for something else: protecting data sent to language models. This site is not connected to any of them.</p>
+<p>Several vendors and projects describe themselves this way, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce uses <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> for something else. It means protecting data sent to language models. This site is not connected to any of them.</p>
 <h3>Read the data yourself</h3>
 <p>The map is built from two files: <a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a>. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
 </div>
