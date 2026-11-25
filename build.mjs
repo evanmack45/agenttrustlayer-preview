@@ -97,7 +97,7 @@ function entryHTML(e) {
 <p class="e-meta"><span class="${e.source_date ? 'when' : 'when nodate'}">${e.source_date ? 'Dated ' : ''}${esc(fmtDate(e.source_date))}</span><span>checked ${esc(fmtDate(e.last_checked))}</span><a class="src" href="${esc(e.source_url)}" rel="noopener">${esc(verLabel(e.verification))}<span class="vh">, source on ${esc(host(e.source_url))}</span></a>${os}</p></li>`;
 }
 const listHTML = (list, cls = '') => `<ol class="entries ${cls}">${sortEntries(list).map(entryHTML).join('\n')}</ol>`;
-const emptyHTML = `<p class="empty" hidden>No entries here match. <button type="button" class="linkbtn js-clear">Clear filters</button></p>`;
+const emptyHTML = `<p class="empty" hidden><img class="empty-mini" src="img/empty-chart-440.webp" width="72" height="72" alt="" decoding="async"> No entries here match. <button type="button" class="linkbtn js-clear">Clear filters</button></p>`;
 
 function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
@@ -261,7 +261,7 @@ ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="ra
 <label class="tog"><input type="checkbox" name="recent" value="1"> Dated in the last 30 days</label>
 </div>
 <p class="status"><span id="status" aria-live="polite">Showing all ${entries.length} entries.</span> <button type="button" class="linkbtn" id="share">Copy link to this view</button> <button type="button" class="linkbtn js-clear" hidden>Clear filters</button></p>
-<p class="none-all" id="none-all" hidden>Nothing matches <b id="none-q"></b>. Check the spelling or <button type="button" class="linkbtn js-clear">clear filters</button>.</p>
+<div class="none-all" id="none-all" hidden><img class="empty-chart" src="img/empty-chart-440.webp" srcset="img/empty-chart-440.webp 440w, img/empty-chart-1024.webp 1024w" sizes="(min-width: 700px) 160px, 30vw" width="1024" height="1024" alt="A small compass at rest on a cream chart, with a dotted course and no compass letters." decoding="async"><p>Nothing matches <b id="none-q"></b>. Check the spelling or <button type="button" class="linkbtn js-clear">clear filters</button>.</p></div>
 </form>
 
 <div class="wrap gates">
