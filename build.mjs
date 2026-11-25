@@ -147,7 +147,8 @@ const thisWeek = events.filter((e) => e.date >= weekCut);
 const W = weeksHTML();
 const catCounts = Object.keys(CAT_LABEL).map((c) => [c, entries.filter((e) => e.category === c).length]);
 const osCount = entries.filter((e) => e.open_source === true).length;
-const trustLayerSelf = entries.filter((e) => /trust layer/i.test(e.name) && !/einstein/i.test(e.name));
+// Entries whose own name or self-description uses the phrase. Salesforce is shown separately.
+const trustLayerSelf = entries.filter((e) => e.id !== 'salesforce-einstein-trust-layer' && (/trust layer/i.test(e.name) || /describ\w* itself as [^.]*trust layer/i.test(e.description)));
 
 const desc = `A sourced, dated map of ${entries.length} standards, products, open-source projects and deals for AI agent identity, permissions, payments and verification. Every entry links its source.`;
 
