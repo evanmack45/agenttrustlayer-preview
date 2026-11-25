@@ -92,6 +92,131 @@
   }
   $('#share').addEventListener('click', (ev) => copy(publicLink(toQuery(readForm())), ev.currentTarget, 'Link copied'));
 
+  // ---- share card: a 1080x1350 PNG of the map, or of the current view ----
+  const CD = JSON.parse($('#card-data').textContent);
+  const loadImg = (src) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+  function lines(g, text, maxW, maxLines) {
+    const words = String(text).split(/\s+/).filter(Boolean), out = [];
+    let cur = '';
+    for (const w of words) {
+      const t = cur ? cur + ' ' + w : w;
+      if (g.measureText(t).width <= maxW || !cur) cur = t; else { out.push(cur); cur = w; }
+    }
+    if (cur) out.push(cur);
+    if (out.length > maxLines) { out.length = maxLines; let l = out[maxLines - 1]; while (l && g.measureText(l + '…').width > maxW) l = l.slice(0, -1); out[maxLines - 1] = l.replace(/\s+$/, '') + '…'; }
+    return out;
+  }
+  const fit = (g, text, maxW) => { let t = String(text); if (g.measureText(t).width <= maxW) return t; while (t && g.measureText(t + '…').width > maxW) t = t.slice(0, -1); return t + '…'; };
+  function viewOf(s) {
+    const shown = entries.filter((li) => !li.hidden);
+    const filtered = !!(s.q || s.cat || s.os || s.recent);
+    if (!filtered || !shown.length) return { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false } };
+    return { all: false, shown, s };
+  }
+  async function drawCard(scope) {
+    const s0 = readForm();
+    const v = scope === 'all' ? { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false } } : viewOf(s0);
+    const W = 1080, H = 1350, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    try { await Promise.all([document.fonts.load('800 80px Bricolage'), document.fonts.load('400 30px Atkinson'), document.fonts.load('700 30px Atkinson')]); } catch { /* fallback fonts */ }
+    const seals = await Promise.all(CD.gates.map((x) => loadImg(`img/seal-${x.seal}.webp`).catch(() => null)));
+    const D = 'Bricolage, "Arial Narrow", Arial, sans-serif', T = 'Atkinson, Arial, sans-serif';
+    const HUE = { id: '#d7ff3c', auth: '#5cf2c0', pay: '#ffc23d', ver: '#ff9cc0' };
+    const INK = { id: '#4b6400', auth: '#00735a', pay: '#8a5700', ver: '#b0245e' };
+    g.fillStyle = '#1f2bd1'; g.fillRect(0, 0, W, H);
+    // brand row
+    g.fillStyle = '#d7ff3c'; g.beginPath(); g.roundRect(72, 76, 56, 26, 13); g.fill();
+    g.fillStyle = '#ffffff'; g.font = `800 34px ${D}`; g.textBaseline = 'alphabetic'; g.fillText('Agent Trust Layer', 146, 100);
+    g.fillStyle = '#dfe3ff'; g.font = `400 26px ${T}`; g.textAlign = 'right'; g.fillText(`Checked ${CD.checked}`, W - 72, 99); g.textAlign = 'left';
+    // headline
+    const sh = v.s;
+    let head, sub;
+    if (v.all) { head = 'How an AI agent gets trusted'; sub = `${CD.total} standards, products and deals, sorted by the four checks an agent's request meets.`; }
+    else {
+      const bits = [];
+      if (sh.q) bits.push(`“${sh.q.length > 26 ? sh.q.slice(0, 25) + '…' : sh.q}”`);
+      if (sh.cat) bits.push((CD.gates.find((x) => x.cat === sh.cat) || {}).short || CD.cats[sh.cat] || sh.cat);
+      head = `${bits.length ? bits.join(' in ') : 'This view'} on the agent trust map`;
+      const extra = [sh.os && 'open source only', sh.recent && 'dated in the last 30 days'].filter(Boolean).join(', ');
+      sub = `${v.shown.length} of ${CD.total} entries match${extra ? ` (${extra})` : ''}.`;
+    }
+    g.fillStyle = '#ffffff'; g.font = `800 96px ${D}`;
+    const hl = lines(g, head, W - 144, 3);
+    let y = 238;
+    for (const l of hl) { g.fillText(l, 72, y); y += 96; }
+    g.fillStyle = '#dfe3ff'; g.font = `400 34px ${T}`;
+    y += 6;
+    for (const l of lines(g, sub, W - 144, 2)) { g.fillText(l, 72, y); y += 46; }
+    // the ticket: four checks, with counts for this view
+    const ty = Math.max(y + 22, 520), th = 300;
+    g.fillStyle = '#f4ecd8'; g.beginPath(); g.roundRect(56, ty, W - 112, th, 20); g.fill();
+    g.strokeStyle = '#b9a77e'; g.setLineDash([6, 8]); g.lineWidth = 2; g.beginPath(); g.roundRect(72, ty + 16, W - 144, th - 32, 14); g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#0e1116'; g.beginPath(); g.roundRect(100, ty + 36, 128, 40, 8); g.fill();
+    g.fillStyle = '#d7ff3c'; g.font = `700 24px ${T}`; g.fillText('Request', 120, ty + 64);
+    g.fillStyle = '#3d4651'; g.font = `400 24px ${T}`; g.fillText('agent → shop.example  ·  four checks', 246, ty + 64);
+    const colW = (W - 200) / 4;
+    CD.gates.forEach((x, i) => {
+      const cx = 100 + colW * i + colW / 2;
+      const n = v.shown.filter((li) => li.dataset.cat === x.cat).length;
+      if (seals[i]) { g.globalAlpha = n ? 1 : 0.35; g.drawImage(seals[i], cx - 52, ty + 92, 104, 104); g.globalAlpha = 1; }
+      g.textAlign = 'center';
+      g.fillStyle = INK[x.key]; g.font = `800 44px ${D}`; g.fillText(String(n), cx, ty + 238);
+      g.fillStyle = '#0e1116'; g.font = `700 24px ${T}`; g.fillText(`${x.n}. ${x.short}`, cx, ty + 270);
+      g.textAlign = 'left';
+    });
+    // bottom list
+    let ly = ty + th + 70;
+    g.fillStyle = '#d7ff3c'; g.font = `700 26px ${T}`;
+    if (v.all) {
+      g.fillText('WHO BUYS WHOM', 72, ly); ly += 54;
+      const rows = [...CD.merges.map((m) => [m.from, m.to, m.date]), ...CD.pending.map((m) => [m.from, m.to, `${m.date}, announced, not closed`])].slice(0, 4);
+      for (const [a, b, d] of rows) {
+        g.fillStyle = '#ffffff'; g.font = `800 40px ${D}`; const t = `${a} → ${b}`; g.fillText(t, 72, ly);
+        const tw = g.measureText(t).width;
+        g.fillStyle = '#dfe3ff'; g.font = `400 26px ${T}`; g.fillText(fit(g, d, W - 144 - tw - 24), 72 + tw + 24, ly);
+        ly += 58;
+      }
+    } else {
+      g.fillText('ON THE MAP', 72, ly); ly += 54;
+      const label = (cat) => (CD.gates.find((x) => x.cat === cat) || {}).short || CD.cats[cat] || cat;
+      const room = Math.floor((H - 176 - ly) / 54) + 1;
+      const rows = v.shown.slice(0, v.shown.length > room ? Math.max(1, room - 1) : room);
+      for (const li of rows) {
+        const nm = $('.e-name', li).textContent, meta = `${label(li.dataset.cat)} · ${$('.when', li).textContent.replace(/^Dated /, '')}`;
+        g.fillStyle = '#ffffff'; g.font = `800 36px ${D}`; const t = fit(g, nm, 640); g.fillText(t, 72, ly);
+        const tw = g.measureText(t).width;
+        g.fillStyle = '#dfe3ff'; g.font = `400 24px ${T}`; g.fillText(fit(g, meta, W - 144 - tw - 24), 72 + tw + 24, ly);
+        ly += 54;
+      }
+      if (v.shown.length > rows.length) { g.fillStyle = '#dfe3ff'; g.font = `400 26px ${T}`; g.fillText(`+${v.shown.length - rows.length} more`, 72, ly); }
+    }
+    // footer: honest, and where every source is
+    g.fillStyle = '#1824b4'; g.fillRect(0, H - 150, W, 150);
+    g.fillStyle = '#dfe3ff'; g.font = `400 26px ${T}`;
+    g.fillText('Not a ranking. Every entry links its source at', 72, H - 92);
+    const url = publicLink(v.all ? '' : toQuery(v.s)).replace(/^https?:\/\//, '').replace(/%2F/gi, '/');
+    g.fillStyle = '#d7ff3c'; g.font = `700 28px ${T}`; g.fillText(fit(g, url, W - 144), 72, H - 50);
+    return c;
+  }
+  window.__atlcard = (scope) => drawCard(scope);
+  document.addEventListener('click', async (ev) => {
+    const b = ev.target.closest('.js-card');
+    if (!b) return;
+    const old = b.textContent;
+    b.disabled = true; b.textContent = 'Drawing…';
+    try {
+      const c = await drawCard(b.dataset.scope);
+      const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'agent-trust-map.png';
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      b.textContent = 'Saved';
+    } catch { b.textContent = 'Could not draw the image'; }
+    setTimeout(() => { b.textContent = old; b.disabled = false; }, 1800);
+  });
+
   // ---- open an entry from its link ----
   function openFromHash() {
     const id = decodeURIComponent(location.hash.slice(1));

@@ -208,7 +208,8 @@ const html = `<!doctype html>
 <img class="intro-art" src="img/hero.webp" srcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" sizes="100vw" width="1280" height="714" alt="Antique star-and-sea chart with islands of contour lines, brass keys, wax seals and lighthouses linked by dotted and gold routes, an armillary sphere and compass rose at right." fetchpriority="high" decoding="async">
 <div class="wrap intro-copy">
 <h1>How an AI agent gets trusted</h1>
-<p class="dek">Follow one request through four checks. Every name links its source.</p>
+<p class="dek">${entries.length} standards, products and deals, sorted by the four checks an agent's request meets. Every name links its source.</p>
+<p class="hero-cta"><button type="button" class="cardbtn js-card" data-scope="all">Save the map as an image</button></p>
 </div>
 </div>
 <section class="request" id="request" aria-label="One agent request, gate by gate">
@@ -260,7 +261,7 @@ ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="ra
 <label class="tog"><input type="checkbox" name="os" value="1"> Open source only</label>
 <label class="tog"><input type="checkbox" name="recent" value="1"> Dated in the last 30 days</label>
 </div>
-<p class="status"><span id="status" aria-live="polite">Showing all ${entries.length} entries.</span> <button type="button" class="linkbtn" id="share">Copy link to this view</button> <button type="button" class="linkbtn js-clear" hidden>Clear filters</button></p>
+<p class="status"><span id="status" aria-live="polite">Showing all ${entries.length} entries.</span> <button type="button" class="linkbtn" id="share">Copy link to this view</button> <button type="button" class="linkbtn js-card" data-scope="view">Save this view as an image</button> <button type="button" class="linkbtn js-clear" hidden>Clear filters</button></p>
 <div class="none-all" id="none-all" hidden><img class="empty-chart" src="img/empty-chart-440.webp" srcset="img/empty-chart-440.webp 440w, img/empty-chart-1024.webp 1024w" sizes="(min-width: 700px) 160px, 30vw" width="1024" height="1024" alt="A small compass at rest on a cream chart, with a dotted course and no compass letters." decoding="async"><p>Nothing matches <b id="none-q"></b>. Check the spelling or <button type="button" class="linkbtn js-clear">clear filters</button>.</p></div>
 </form>
 
@@ -311,6 +312,7 @@ ${tapeHTML()}
 <p>Data last checked ${esc(fmtDate(generated))} (US Central time). Found a mistake? Every entry links its source so you can check it.</p>
 <p class="sale"><a href="https://www.afternic.com/domain/agenttrustlayer.com" rel="noopener">This domain is available.</a></p>
 </div></footer>
+<script type="application/json" id="card-data">${JSON.stringify({ total: entries.length, checked: fmtDate(generated), gates: GATES.map((g) => ({ n: g.n, cat: g.cat, line: g.line, short: SHORT[g.cat], seal: SEAL[g.key], key: g.key, count: entries.filter((e) => e.category === g.cat).length })), cats: CAT_LABEL, merges: mergeRows.map(({ ev, mg }) => ({ from: mg.from, to: mg.to, date: fmtDate(ev.date) })), pending: pending.map((ev) => ({ from: ev.title.match(/acquire (\w+)/i)?.[1] || '', to: ev.title.split(' ')[0], date: fmtDate(ev.date) })) }).replace(/</g, '\\u003c')}</script>
 <script src="app.js" defer></script>
 </body>
 </html>
