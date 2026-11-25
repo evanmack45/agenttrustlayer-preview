@@ -1,0 +1,110 @@
+{
+  "generated": "2026-11-24",
+  "events": [
+    {
+      "date": "2026-11-24",
+      "type": "standard",
+      "title": "OpenID Foundation launches the Agent Auth (AAuth) Working Group",
+      "source_url": "https://openid.net/announcing-the-agent-auth-aauth-working-group/",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-23",
+      "type": "deal",
+      "title": "CrowdStrike agrees to acquire Zscaler in an all-stock deal valuing Zscaler at about $43.9B",
+      "source_url": "https://www.crowdstrike.com/en-us/press-releases/crowdstrike-to-acquire-zscaler-bringing-network-security-and-zero-trust-to-the-falcon-platform/",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-23",
+      "type": "deal",
+      "title": "Workday completes acquisition of agentic identity platform C1.ai",
+      "source_url": "https://newsroom.workday.com/2026-11-23-Workday-Completes-Acquisition-of-C1-ai",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-17",
+      "type": "product",
+      "title": "Visa expands Agentic Ready to merchants, PSPs and acquirers (140+ participants)",
+      "source_url": "https://corporate.visa.com/en/sites/visa-perspectives/newsroom/visa-agentic-ready-expansion.html",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-12",
+      "type": "deal",
+      "title": "IBM acquires AuthMind to extend HashiCorp Vault agent identity",
+      "source_url": "https://newsroom.ibm.com/blog-ibm-advances-agent-identity-security-with-new-vault-capabilities",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-10",
+      "type": "standard",
+      "title": "Linux Foundation takes in Agent Name Service (ANS); 11 organizations support it",
+      "source_url": "https://www.linuxfoundation.org/press/linux-foundation-welcomes-agent-name-service-to-bring-verifiable-identity-and-discovery-to-ai-agents",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-04",
+      "type": "product",
+      "title": "Descope launches Envoy for delegated agent sign-in on consumer sites",
+      "source_url": "https://www.descope.com/press-release/envoy",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-11-02",
+      "type": "standard",
+      "title": "IETF publishes draft-ietf-wimse-aims-01 on agent authentication and authorization",
+      "source_url": "https://datatracker.ietf.org/doc/html/draft-ietf-wimse-aims-01",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-10-22",
+      "type": "standard",
+      "title": "AER-1 agent execution receipts Internet-Draft dated (author-reported)",
+      "source_url": "https://dev.to/rambozambo/what-is-the-trust-layer-for-ai-agents-3abo",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-09-30",
+      "type": "deal",
+      "title": "Beltic raises $7.3M seed led by Norwest",
+      "source_url": "https://www.streetinsider.com/PRNewswire/Beltic+Emerges+from+Stealth+to+Secure+Autonomous+Agent+Transactions+at+Scale/27126763.html",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-09-22",
+      "type": "deal",
+      "title": "Baselayer raises $35M Series A led by M13 and launches Agentic Identity Suite",
+      "source_url": "https://news.crunchbase.com/ai/verifying-ai-agents-baselayer-35m-raise/",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-07-14",
+      "type": "standard",
+      "title": "Linux Foundation announces operational launch of the x402 Foundation (40 members)",
+      "source_url": "https://www.linuxfoundation.org/press/linux-foundation-announces-operational-launch-of-x402-foundation-to-standardize-internet-native-payments-for-ai-agents-and-applications",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-06-29",
+      "type": "deal",
+      "title": "Cisco closes its acquisition of Astrix Security",
+      "source_url": "https://nhigovernance.com/news/2026/cisco-astrix-and-sailpoint-entro-close-on-same-day.html",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-04-28",
+      "type": "standard",
+      "title": "Google donates Agent Payments Protocol (AP2) to the FIDO Alliance and releases v0.2",
+      "source_url": "https://blog.google/products-and-platforms/platforms/google-pay/agent-payments-protocol-fido-alliance/",
+      "last_checked": "2026-11-24"
+    },
+    {
+      "date": "2026-04-16",
+      "type": "deal",
+      "title": "Capsule Security launches with a $7M seed round",
+      "source_url": "https://newclawtimes.com/articles/capsule-security-7m-seed-ai-agent-runtime-trust-layer/",
+      "last_checked": "2026-11-24"
+    }
+  ]
+}
