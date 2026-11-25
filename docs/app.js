@@ -10,6 +10,13 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DAY = 864e5;
 
+  // ---- public URL (share links) ----
+  // Switch to the custom domain at go-live.
+  const CANONICAL = 'https://evanmack45.github.io/agenttrustlayer-preview/';
+  const isLocalPage = () => location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const publicPage = () => (isLocalPage() ? CANONICAL : `${location.origin}${location.pathname}`).replace(/index\.html$/, '').replace(/\/?$/, '/');
+  const publicLink = (suffix) => `${publicPage().replace(/\/$/, '/')}${String(suffix || '').replace(/^\//, '')}`;
+
   // ---- state <-> URL ----
   const readURL = () => {
     const p = new URLSearchParams(location.search);
@@ -83,7 +90,7 @@
     catch { prompt('Copy this link:', url); }
     setTimeout(() => (btn.textContent = old), 1800);
   }
-  $('#share').addEventListener('click', (ev) => copy(location.origin + location.pathname + toQuery(readForm()), ev.currentTarget, 'Link copied'));
+  $('#share').addEventListener('click', (ev) => copy(publicLink(toQuery(readForm())), ev.currentTarget, 'Link copied'));
 
   // ---- open an entry from its link ----
   function openFromHash() {
