@@ -8,7 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > -1 ? process.argv[i + 1] : d; };
 const DATA = arg('--data', join(here, '..', 'data'));
 const OUT = arg('--out', join(here, 'docs'));
-const BASE = arg('--base', 'https://evanmack45.github.io/agenttrustlayer-preview/');
+const BASE = arg('--base', 'https://agenttrustlayer.com/');
 
 const entriesDoc = JSON.parse(readFileSync(join(DATA, 'entries.json'), 'utf8'));
 const changelogDoc = JSON.parse(readFileSync(join(DATA, 'changelog.json'), 'utf8'));
@@ -179,7 +179,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="${esc(BASE)}">
 <title>Agent Trust Layer: how an AI agent gets trusted, gate by gate</title>
 <meta name="description" content="${esc(desc)}">
 <meta property="og:title" content="Agent Trust Layer: how an AI agent gets trusted">
@@ -330,11 +330,13 @@ writeFileSync(join(OUT, 'data', 'entries.json'), JSON.stringify(entriesDoc, null
 // Publish the changelog without the unverified leads.
 const { unverified_leads_not_published, ...publicLog } = changelogDoc;
 writeFileSync(join(OUT, 'data', 'changelog.json'), JSON.stringify(publicLog, null, 2) + '\n');
-writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${BASE}sitemap.xml\n`);
+writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${BASE}</loc></url></urlset>\n`);
+writeFileSync(join(OUT, 'CNAME'), 'agenttrustlayer.com\n');
 writeFileSync(join(OUT, '.nojekyll'), '');
 writeFileSync(join(OUT, 'llms.txt'), `# Agent Trust Layer: a living map
 
-> ${desc} Data last checked ${generated} (America/Chicago). Preview build, not indexed.
+> ${desc} Data last checked ${generated} (America/Chicago).
 
 The map groups entries by four questions an AI agent request meets: who are you (identity), what may you do (auth/permissions), can you pay (payments/commerce), can we prove what you did (verification). Standards and deals are listed separately. Nothing is ranked or recommended.
 

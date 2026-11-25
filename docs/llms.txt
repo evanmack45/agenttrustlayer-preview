@@ -1,12 +1,12 @@
 # Agent Trust Layer: a living map
 
-> A sourced, dated map of 56 standards, products, open-source projects and deals for AI agent identity, permissions, payments and verification. Every entry links its source. Data last checked 2026-11-24 (America/Chicago). Preview build, not indexed.
+> A sourced, dated map of 56 standards, products, open-source projects and deals for AI agent identity, permissions, payments and verification. Every entry links its source. Data last checked 2026-11-24 (America/Chicago).
 
 The map groups entries by four questions an AI agent request meets: who are you (identity), what may you do (auth/permissions), can you pay (payments/commerce), can we prove what you did (verification). Standards and deals are listed separately. Nothing is ranked or recommended.
 
 ## Data
-- [entries.json](https://evanmack45.github.io/agenttrustlayer-preview/data/entries.json): 56 entries. Fields: id, name, category, kind, description, url, source_url, source_date (null = not captured), source_date_precision, open_source (null = unknown), verification, last_checked, note.
-- [changelog.json](https://evanmack45.github.io/agenttrustlayer-preview/data/changelog.json): 15 dated events with source links.
+- [entries.json](https://agenttrustlayer.com/data/entries.json): 56 entries. Fields: id, name, category, kind, description, url, source_url, source_date (null = not captured), source_date_precision, open_source (null = unknown), verification, last_checked, note.
+- [changelog.json](https://agenttrustlayer.com/data/changelog.json): 15 dated events with source links.
 
 ## Entries by category
 - identity: 15
