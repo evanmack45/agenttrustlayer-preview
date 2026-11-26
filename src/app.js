@@ -20,15 +20,16 @@
   // ---- state <-> URL ----
   const readURL = () => {
     const p = new URLSearchParams(location.search);
-    return { q: p.get('q') || '', cat: p.get('cat') || '', os: p.get('os') === '1', recent: p.get('recent') === '1' };
+    return { q: p.get('q') || '', cat: p.get('cat') || '', os: p.get('os') === '1', recent: p.get('recent') === '1', week: p.get('week') === '1' };
   };
-  const readForm = () => ({ q: q.value.trim(), cat: form.cat.value, os: form.os.checked, recent: form.recent.checked });
+  const readForm = () => ({ q: q.value.trim(), cat: form.cat.value, os: form.os.checked, recent: form.recent.checked, week: form.week.checked });
   const writeForm = (s) => {
     q.value = s.q;
     const r = $$('input[name=cat]').find((i) => i.value === s.cat) || $('input[name=cat][value=""]');
     r.checked = true;
     form.os.checked = s.os;
     form.recent.checked = s.recent;
+    form.week.checked = s.week;
   };
   const toQuery = (s) => {
     const p = new URLSearchParams();
@@ -36,6 +37,7 @@
     if (s.cat) p.set('cat', s.cat);
     if (s.os) p.set('os', '1');
     if (s.recent) p.set('recent', '1');
+    if (s.week) p.set('week', '1');
     const str = p.toString();
     return str ? '?' + str : '';
   };
@@ -63,7 +65,7 @@
     syncList(ol, false);
   });
   const openList = (li) => { const ol = li.closest('ol[data-cap]:not([data-plain])'); if (ol && ol.dataset.user !== '1') { ol.dataset.user = '1'; syncList(ol, readFilteredState()); } };
-  const readFilteredState = () => { const f = readForm(); return !!(f.q || f.cat || f.os || f.recent); };
+  const readFilteredState = () => { const f = readForm(); return !!(f.q || f.cat || f.os || f.recent || f.week); };
 
   // ---- filtering ----
   const today = Date.now();
@@ -76,6 +78,7 @@
       const ok = (!s.cat || li.dataset.cat === s.cat)
         && (!s.os || li.dataset.os === '1')
         && (!s.recent || (d && today - d <= 30 * DAY))
+        && (!s.week || (d && today - d <= 7 * DAY))
         && words.every((w) => li.dataset.text.includes(w));
       li.hidden = !ok;
       if (ok) shown++;
@@ -91,7 +94,7 @@
       $('.empty', g).hidden = vis > 0;
       g.classList.toggle('dim', vis === 0);
     }
-    const filtered = s.q || s.cat || s.os || s.recent;
+    const filtered = s.q || s.cat || s.os || s.recent || s.week;
     lists.forEach((ol) => syncList(ol, !!filtered));
     $('#status').textContent = filtered ? `Showing ${shown} of ${total} entries.` : `Showing all ${total} entries.`;
     $$('.tools .js-clear').forEach((b) => (b.hidden = !filtered));
@@ -106,7 +109,7 @@
   document.addEventListener('click', (ev) => {
     const t = ev.target.closest('.js-clear');
     if (!t) return;
-    const s = { q: '', cat: '', os: false, recent: false };
+    const s = { q: '', cat: '', os: false, recent: false, week: false };
     writeForm(s);
     apply(s);
     q.focus();
@@ -138,13 +141,13 @@
   const fit = (g, text, maxW) => { let t = String(text); if (g.measureText(t).width <= maxW) return t; while (t && g.measureText(t + '…').width > maxW) t = t.slice(0, -1); return t + '…'; };
   function viewOf(s) {
     const shown = entries.filter((li) => !li.hidden);
-    const filtered = !!(s.q || s.cat || s.os || s.recent);
-    if (!filtered || !shown.length) return { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false } };
+    const filtered = !!(s.q || s.cat || s.os || s.recent || s.week);
+    if (!filtered || !shown.length) return { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false, week: false } };
     return { all: false, shown, s };
   }
   async function drawCard(scope) {
     const s0 = readForm();
-    const v = scope === 'all' ? { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false } } : viewOf(s0);
+    const v = scope === 'all' ? { all: true, shown: entries, s: { q: '', cat: '', os: false, recent: false, week: false } } : viewOf(s0);
     const W = 1080, H = 1350, c = document.createElement('canvas');
     c.width = W; c.height = H;
     const g = c.getContext('2d');
@@ -167,7 +170,7 @@
       if (sh.q) bits.push(`“${sh.q.length > 26 ? sh.q.slice(0, 25) + '…' : sh.q}”`);
       if (sh.cat) bits.push((CD.gates.find((x) => x.cat === sh.cat) || {}).short || CD.cats[sh.cat] || sh.cat);
       head = `${bits.length ? bits.join(' in ') : 'This view'} on the agent trust map`;
-      const extra = [sh.os && 'open source only', sh.recent && 'dated in the last 30 days'].filter(Boolean).join(', ');
+      const extra = [sh.os && 'open source only', sh.recent && 'dated in the last 30 days', sh.week && 'dated in the last 7 days'].filter(Boolean).join(', ');
       sub = `${v.shown.length} of ${CD.total} entries match${extra ? ` (${extra})` : ''}.`;
     }
     g.fillStyle = '#ffffff'; g.font = `800 96px ${D}`;
@@ -252,7 +255,7 @@
     if (!id.startsWith('e-')) return;
     const li = document.getElementById(id);
     if (!li) return;
-    if (li.hidden) { const s = { q: '', cat: '', os: false, recent: false }; writeForm(s); apply(s); }
+    if (li.hidden) { const s = { q: '', cat: '', os: false, recent: false, week: false }; writeForm(s); apply(s); }
     li.classList.add('seen');
     openList(li);
     $('details', li).open = true;

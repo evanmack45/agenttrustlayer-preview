@@ -115,11 +115,11 @@ const emptyHTML = `<p class="empty" hidden><img class="empty-mini" src="img/empt
 
 function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
-  return `<section class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" aria-labelledby="gate-${g.n}-h">
+  return `<div class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" role="group" aria-labelledby="gate-${g.n}-h">
 <div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><img class="gate-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
 <p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
 <p class="count" aria-live="polite"><span class="shown">${list.length}</span> entries</p></div></div>
-${listHTML(list)}${emptyHTML}</section>`;
+${listHTML(list)}${emptyHTML}</div>`;
 }
 
 function ribbonHTML() {
@@ -130,35 +130,7 @@ function ribbonHTML() {
   return `<div class="ribbon-wrap"><table class="ribbon" id="${id}"${rest > 0 ? ` data-cap="${cap}" data-plain="1"` : ''}><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}">${g.n} ${esc(SHORT[g.cat])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>${rest > 0 ? moreBtn(id, rest, 'more specs') : ''}`;
 }
 
-function tapeHTML() {
-  const months = [];
-  const asc = [...events].sort((a, b) => a.date.localeCompare(b.date));
-  let [y, m] = asc[0].date.split('-').map(Number);
-  const [ly, lm] = asc.at(-1).date.split('-').map(Number);
-  while (y < ly || (y === ly && m <= lm)) { months.push(`${y}-${String(m).padStart(2, '0')}`); m++; if (m > 12) { m = 1; y++; } }
-  const TAPE_SHOW = 2; // newest months shown; older ones behind a button
-  const hide = Math.max(0, months.length - TAPE_SHOW);
-  const tid = `list-${++listN}`;
-  return `${hide > 0 ? moreBtn(tid, hide, 'earlier months') : ''}<ol class="tape" id="${tid}"${hide > 0 ? ` data-cap="${TAPE_SHOW}" data-plain="1"` : ''}>${months.map((mo, mi) => {
-    const evs = asc.filter((e) => e.date.startsWith(mo));
-    const [yy, mm] = mo.split('-').map(Number);
-    return `<li class="month${evs.length ? '' : ' quiet'}${mi < hide ? ' over' : ''}"><p class="mo">${MON[mm - 1]} ${yy}</p>${evs.length ? `<ol>${evs.map((ev) => {
-      const mg = mergeFor(ev);
-      return `<li class="ev c-${EVENT_KEY[ev.type]}"><p class="ev-d"><span class="ev-type">${EVENT_LABEL[ev.type]}</span> ${esc(fmtDate(ev.date))}</p>${mg ? `<p class="merge-static"><span class="from">${esc(mg.fromFull)}</span> is now part of <span class="to">${esc(mg.to)}</span></p>` : ''}<p class="ev-t"><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></p></li>`;
-    }).join('')}</ol>` : '<p class="none">No dated events</p>'}</li>`;
-  }).join('')}</ol>`;
-}
 
-function weeksHTML() {
-  const DAY = 864e5;
-  const end = Date.parse(generated + 'T12:00:00Z');
-  const asc = [...events].sort((a, b) => a.date.localeCompare(b.date));
-  const start = Date.parse(asc[0].date + 'T12:00:00Z');
-  const nWeeks = Math.floor((end - start) / (7 * DAY)) + 1;
-  const weeks = Array.from({ length: nWeeks }, () => []);
-  for (const ev of asc) weeks[nWeeks - 1 - Math.floor((end - Date.parse(ev.date + 'T12:00:00Z')) / (7 * DAY))].push(ev);
-  return { nWeeks, html: `<ol class="weeks" aria-hidden="true">${weeks.map((w) => `<li>${w.map((ev) => `<span class="sq c-${EVENT_KEY[ev.type]}"></span>`).join('')}</li>`).join('')}</ol>` };
-}
 
 // ---------- the hero: "The Request" ----------
 const stampText = (g) => g.ex.map(([id, l]) => l).join(' / ');
@@ -186,7 +158,6 @@ ${pending.map((ev) => `<li class="pending"><span class="m-pair"><span class="m-f
 
 const weekCut = new Date(Date.parse(generated + 'T12:00:00Z') - 7 * 864e5).toISOString().slice(0, 10);
 const thisWeek = events.filter((e) => e.date >= weekCut);
-const W = weeksHTML();
 const catCounts = Object.keys(CAT_LABEL).map((c) => [c, entries.filter((e) => e.category === c).length]);
 const osCount = entries.filter((e) => e.open_source === true).length;
 // Entries whose own name or self-description uses the phrase. Salesforce is shown separately.
@@ -223,7 +194,7 @@ const html = `<!doctype html>
 <body>
 <a class="skip" href="#map">Skip to the full map</a>
 <header class="hero">
-<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#map">Map</a><a href="#deals">Deals</a><a href="#about">About</a></span></nav>
+<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#map">Map</a><a href="#specs">Specs</a><a href="#about">About</a></span></nav>
 <div class="intro">
 <img class="intro-art" src="img/hero.webp" srcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" sizes="100vw" width="1280" height="714" alt="Antique star-and-sea chart with islands of contour lines, brass keys, wax seals and lighthouses linked by dotted and gold routes, an armillary sphere and compass rose at right." fetchpriority="high" decoding="async">
 <div class="wrap intro-copy">
@@ -256,15 +227,8 @@ ${heroDeals}
 </div>
 
 <main id="map">
-<section class="wrap week" aria-labelledby="week-h">
-<h2 id="week-h">Events by week</h2>
-<figure class="pace">
-${W.html}
-<figcaption><b>${events.length} dated events in ${W.nWeeks} weeks.</b> One square per event, one column per week, oldest on the left. <span class="legend"><span class="sq c-std"></span>Standard <span class="sq c-deal"></span>Deal <span class="sq c-prod"></span>Product</span></figcaption>
-</figure>
-</section>
-
-<div class="wrap full-h"><h2>The full map</h2><p class="lede">${entries.length} entries, ${osCount} open source. Newest first. All checked ${esc(fmtDate(generated))}. Tap a name for its date, source and notes.</p></div>
+<section class="map-sec" aria-labelledby="map-h">
+<div class="wrap full-h"><h2 id="map-h">The full map</h2><p class="lede">${entries.length} entries, ${osCount} open source. Newest first. All checked ${esc(fmtDate(generated))}. Tap a name for its date, source and notes.</p></div>
 <form class="wrap tools" role="search" aria-label="Filter the map" onsubmit="return false">
 <div class="search"><label for="q">Search the map</label><input id="q" name="q" type="search" autocomplete="off" placeholder="Try x402, Okta, receipts"></div>
 <fieldset class="chips"><legend>Category</legend>
@@ -273,6 +237,7 @@ ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="ra
 </fieldset>
 <div class="toggles">
 <label class="tog"><input type="checkbox" name="os" value="1"> Open source only</label>
+<label class="tog"><input type="checkbox" name="week" value="1"> Last 7 days</label>
 <label class="tog"><input type="checkbox" name="recent" value="1"> Dated in the last 30 days</label>
 </div>
 <p class="status"><span id="status" aria-live="polite">Showing all ${entries.length} entries.</span> <button type="button" class="linkbtn" id="share">Copy link to this view</button> <button type="button" class="linkbtn js-card" data-scope="view">Save this view as an image</button> <button type="button" class="linkbtn js-clear" hidden>Clear filters</button></p>
@@ -281,20 +246,15 @@ ${catCounts.map(([c, n]) => `<label class="chip c-${CAT_KEY[c]}"><input type="ra
 
 <div class="wrap gates">
 ${GATES.map(gateHTML).join('\n')}
+<div class="std-list c-deal" id="deals" data-gate="deal"><h3>Deals in the map (${entries.filter((e) => e.category === 'deals').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'deals'))}${emptyHTML}</div>
 </div>
+</section>
 
 <section class="wrap block" id="specs" aria-labelledby="specs-h">
 <h2 id="specs-h"><img class="sec-emblem" src="img/emblem-standards.webp" width="48" height="50" alt="" decoding="async"> The specs underneath</h2>
 <p class="lede">A filled dot marks the gate where a spec is listed. A ring marks another gate that its own description names. The match is by keyword, so read the spec before you rely on it.</p>
 ${ribbonHTML()}
 <div class="std-list c-std" data-gate="std"><h3>Cross-gate standards (${entries.filter((e) => e.category === 'standards').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'standards'))}${emptyHTML}</div>
-</section>
-
-<section class="wrap block" id="deals" aria-labelledby="deals-h">
-<h2 id="deals-h"><img class="sec-emblem" src="img/emblem-deals.webp" width="48" height="50" alt="" decoding="async"> The deal tape</h2>
-<p class="lede">Every dated event, by month. Empty months stay on the tape, so the gaps are real.</p>
-${tapeHTML()}
-<div class="std-list c-deal" data-gate="deal"><h3>Deals in the map (${entries.filter((e) => e.category === 'deals').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'deals'))}${emptyHTML}</div>
 </section>
 
 <section class="wrap block about" id="about" aria-labelledby="about-h">

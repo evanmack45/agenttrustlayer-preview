@@ -228,7 +228,7 @@
       "source_date": null,
       "source_date_precision": null,
       "open_source": true,
-      "verification": "primary",
+      "verification": "secondary",
       "last_checked": "2026-11-24",
       "note": "Repo Apache-2.0, last push 2026-07-18 (GitHub API, read 2026-11-24). Description follows the Verifiable Intent protocol-landscape page; announcement date not captured."
     },
