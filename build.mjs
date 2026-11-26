@@ -86,17 +86,31 @@ const specs = entries.filter((e) => e.kind === 'standard' || e.kind === 'protoco
 
 // ---------- rendering ----------
 const SHORT = { identity: 'Identity', 'auth/permissions': 'Permissions', 'payments/commerce': 'Payments', verification: 'Proof' };
-function entryHTML(e) {
+// Each entry is one line: name, short tag, source arrow. Dates, check date, source label and
+// the description sit behind the line (a details toggle). The page-level "checked" date is in the list lead.
+const CAP = 8;       // entries shown per category before the "show more" button
+const CAP_SLACK = 2; // a list of CAP + 2 or fewer shows in full: "show 1 more" is not worth a button
+function entryHTML(e, over = false) {
   const os = e.open_source === true ? '<span class="tag tag-os">Open source</span>' : e.open_source === false ? '<span class="tag">Not open source</span>' : '';
   const text = [e.name, e.description, e.kind, CAT_LABEL[e.category], e.note || '', verLabel(e.verification)].join(' ').toLowerCase();
   const recentable = e.source_date && e.source_date.length === 10 ? e.source_date : '';
-  return `<li class="entry c-${CAT_KEY[e.category]}" id="e-${esc(e.id)}" data-cat="${esc(e.category)}" data-os="${e.open_source === true ? 1 : 0}" data-day="${recentable}" data-text="${esc(text)}">
+  return `<li class="entry c-${CAT_KEY[e.category]}${over ? ' over' : ''}" id="e-${esc(e.id)}" data-cat="${esc(e.category)}" data-os="${e.open_source === true ? 1 : 0}" data-day="${recentable}" data-text="${esc(text)}">
 <details><summary><span class="e-name">${esc(e.name)}</span> <span class="e-kind">${esc(e.kind)}</span></summary>
 <div class="e-body"><p>${esc(e.description)}</p>${e.note ? `<p class="e-note"><b>Note.</b> ${esc(e.note)}</p>` : ''}
+<p class="e-meta"><span class="${e.source_date ? 'when' : 'when nodate'}">${e.source_date ? 'Dated ' : ''}${esc(fmtDate(e.source_date))}</span><span>checked ${esc(fmtDate(e.last_checked))}</span><a class="src" href="${esc(e.source_url)}" rel="noopener">${esc(verLabel(e.verification))}<span class="vh">, source on ${esc(host(e.source_url))}</span></a>${os}</p>
 <p class="e-links">${e.url && e.url !== e.source_url ? `<a href="${esc(e.url)}" rel="noopener">Project page (${esc(host(e.url))})</a> <span class="sep" aria-hidden="true">/</span> ` : ''}<a href="#e-${esc(e.id)}" class="permalink" data-id="${esc(e.id)}">Link to this entry</a></p></div></details>
-<p class="e-meta"><span class="${e.source_date ? 'when' : 'when nodate'}">${e.source_date ? 'Dated ' : ''}${esc(fmtDate(e.source_date))}</span><span>checked ${esc(fmtDate(e.last_checked))}</span><a class="src" href="${esc(e.source_url)}" rel="noopener">${esc(verLabel(e.verification))}<span class="vh">, source on ${esc(host(e.source_url))}</span></a>${os}</p></li>`;
+<a class="e-ico" href="${esc(e.source_url)}" rel="noopener" aria-label="Source for ${esc(e.name)}, on ${esc(host(e.source_url))}"><span aria-hidden="true">↗</span></a></li>`;
 }
-const listHTML = (list, cls = '') => `<ol class="entries ${cls}">${sortEntries(list).map(entryHTML).join('\n')}</ol>`;
+let listN = 0;
+const moreBtn = (id, n, noun = 'more') => `<p class="more-wrap"><button type="button" class="more" aria-expanded="false" aria-controls="${id}" data-n="${n}" data-noun="${noun}">Show ${n} ${noun}</button></p>`;
+function listHTML(list, cls = '') {
+  const sorted = sortEntries(list);
+  const cap = sorted.length > CAP + CAP_SLACK ? CAP : sorted.length;
+  const id = `list-${++listN}`;
+  const rest = sorted.length - cap;
+  const more = rest > 0 ? moreBtn(id, rest) : '';
+  return `<ol class="entries ${cls}" id="${id}"${rest > 0 ? ` data-cap="${cap}"` : ''}>${sorted.map((e, i) => entryHTML(e, i >= cap)).join('\n')}</ol>${more}`;
+}
 const emptyHTML = `<p class="empty" hidden><img class="empty-mini" src="img/empty-chart-440.webp" width="72" height="72" alt="" decoding="async"> No entries here match. <button type="button" class="linkbtn js-clear">Clear filters</button></p>`;
 
 function gateHTML(g) {
@@ -104,13 +118,16 @@ function gateHTML(g) {
   return `<section class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" aria-labelledby="gate-${g.n}-h">
 <div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><img class="gate-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
 <p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
-<p class="count" aria-live="polite"><span class="shown">${list.length}</span> of ${list.length} shown</p></div></div>
+<p class="count" aria-live="polite"><span class="shown">${list.length}</span> entries</p></div></div>
 ${listHTML(list)}${emptyHTML}</section>`;
 }
 
 function ribbonHTML() {
-  const rows = specs.map(({ e, gates }) => `<tr data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g, i) => `<td class="${[g.hit && 'hit', g.home && 'home', g.hit && (gates[i - 1]?.hit || gates[i + 1]?.hit) && 'join'].filter(Boolean).join(' ')}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
-  return `<div class="ribbon-wrap"><table class="ribbon"><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}">${g.n} ${esc(SHORT[g.cat])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const cap = specs.length > CAP + CAP_SLACK ? 6 : specs.length;
+  const rows = specs.map(({ e, gates }, i) => `<tr${i >= cap ? ' class="over"' : ''} data-id="${esc(e.id)}"><th scope="row"><a href="#e-${esc(e.id)}">${esc(e.name)}</a></th>${gates.map((g, k) => `<td class="${[g.hit && 'hit', g.home && 'home', g.hit && (gates[k - 1]?.hit || gates[k + 1]?.hit) && 'join'].filter(Boolean).join(' ')}">${g.hit ? `<span class="dot" aria-hidden="true"></span><span class="vh">${g.home ? 'listed here' : 'mentioned'}</span>` : '<span class="vh">no</span>'}</td>`).join('')}</tr>`).join('');
+  const id = `list-${++listN}`;
+  const rest = specs.length - cap;
+  return `<div class="ribbon-wrap"><table class="ribbon" id="${id}"${rest > 0 ? ` data-cap="${cap}" data-plain="1"` : ''}><caption class="vh">Which specs touch which gate</caption><thead><tr><th scope="col">Spec or protocol</th>${GATES.map((g) => `<th scope="col" class="c-${g.key}">${g.n} ${esc(SHORT[g.cat])}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>${rest > 0 ? moreBtn(id, rest, 'more specs') : ''}`;
 }
 
 function tapeHTML() {
@@ -119,10 +136,13 @@ function tapeHTML() {
   let [y, m] = asc[0].date.split('-').map(Number);
   const [ly, lm] = asc.at(-1).date.split('-').map(Number);
   while (y < ly || (y === ly && m <= lm)) { months.push(`${y}-${String(m).padStart(2, '0')}`); m++; if (m > 12) { m = 1; y++; } }
-  return `<ol class="tape">${months.map((mo) => {
+  const TAPE_SHOW = 2; // newest months shown; older ones behind a button
+  const hide = Math.max(0, months.length - TAPE_SHOW);
+  const tid = `list-${++listN}`;
+  return `${hide > 0 ? moreBtn(tid, hide, 'earlier months') : ''}<ol class="tape" id="${tid}"${hide > 0 ? ` data-cap="${TAPE_SHOW}" data-plain="1"` : ''}>${months.map((mo, mi) => {
     const evs = asc.filter((e) => e.date.startsWith(mo));
     const [yy, mm] = mo.split('-').map(Number);
-    return `<li class="month${evs.length ? '' : ' quiet'}"><p class="mo">${MON[mm - 1]} ${yy}</p>${evs.length ? `<ol>${evs.map((ev) => {
+    return `<li class="month${evs.length ? '' : ' quiet'}${mi < hide ? ' over' : ''}"><p class="mo">${MON[mm - 1]} ${yy}</p>${evs.length ? `<ol>${evs.map((ev) => {
       const mg = mergeFor(ev);
       return `<li class="ev c-${EVENT_KEY[ev.type]}"><p class="ev-d"><span class="ev-type">${EVENT_LABEL[ev.type]}</span> ${esc(fmtDate(ev.date))}</p>${mg ? `<p class="merge-static"><span class="from">${esc(mg.fromFull)}</span> is now part of <span class="to">${esc(mg.to)}</span></p>` : ''}<p class="ev-t"><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></p></li>`;
     }).join('')}</ol>` : '<p class="none">No dated events</p>'}</li>`;
@@ -237,20 +257,14 @@ ${heroDeals}
 
 <main id="map">
 <section class="wrap week" aria-labelledby="week-h">
-<div class="week-grid">
-<div>
-<h2 id="week-h">This week</h2>
-<p class="lede">Dated events in the 7 days to ${esc(fmtDate(generated))}.</p>
-<ul class="week-list">${thisWeek.map((ev) => `<li class="c-${EVENT_KEY[ev.type]}"><span class="wd">${esc(fmtDate(ev.date).replace(/, \d{4}$/, ''))}</span><a href="${esc(ev.source_url)}" rel="noopener">${esc(ev.title)}</a></li>`).join('')}</ul>
-</div>
+<h2 id="week-h">Events by week</h2>
 <figure class="pace">
 ${W.html}
 <figcaption><b>${events.length} dated events in ${W.nWeeks} weeks.</b> One square per event, one column per week, oldest on the left. <span class="legend"><span class="sq c-std"></span>Standard <span class="sq c-deal"></span>Deal <span class="sq c-prod"></span>Product</span></figcaption>
 </figure>
-</div>
 </section>
 
-<div class="wrap full-h"><h2>The full map</h2><p class="lede">${entries.length} entries. ${osCount} are open source. Inside each gate, the order is by date, newest first.</p></div>
+<div class="wrap full-h"><h2>The full map</h2><p class="lede">${entries.length} entries, ${osCount} open source. Newest first. All checked ${esc(fmtDate(generated))}. Tap a name for its date, source and notes.</p></div>
 <form class="wrap tools" role="search" aria-label="Filter the map" onsubmit="return false">
 <div class="search"><label for="q">Search the map</label><input id="q" name="q" type="search" autocomplete="off" placeholder="Try x402, Okta, receipts"></div>
 <fieldset class="chips"><legend>Category</legend>
@@ -271,14 +285,14 @@ ${GATES.map(gateHTML).join('\n')}
 
 <section class="wrap block" id="specs" aria-labelledby="specs-h">
 <h2 id="specs-h"><img class="sec-emblem" src="img/emblem-standards.webp" width="48" height="50" alt="" decoding="async"> The specs underneath</h2>
-<p class="lede">Standards and protocols often reach past one gate. A filled dot marks the gate where the map lists the spec. A ring marks another gate that the spec's own one-line description names, by words such as "identity", "authorization", "payments" or "verify". The rule is mechanical, so read each spec before you rely on it.</p>
+<p class="lede">A filled dot marks the gate where a spec is listed. A ring marks another gate that its own description names. The match is by keyword, so read the spec before you rely on it.</p>
 ${ribbonHTML()}
 <div class="std-list c-std" data-gate="std"><h3>Cross-gate standards (${entries.filter((e) => e.category === 'standards').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'standards'))}${emptyHTML}</div>
 </section>
 
 <section class="wrap block" id="deals" aria-labelledby="deals-h">
 <h2 id="deals-h"><img class="sec-emblem" src="img/emblem-deals.webp" width="48" height="50" alt="" decoding="async"> The deal tape</h2>
-<p class="lede">Every dated event in the map, by month. Months with no event stay on the tape, so the gaps are real.</p>
+<p class="lede">Every dated event, by month. Empty months stay on the tape, so the gaps are real.</p>
 ${tapeHTML()}
 <div class="std-list c-deal" data-gate="deal"><h3>Deals in the map (${entries.filter((e) => e.category === 'deals').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'deals'))}${emptyHTML}</div>
 </section>
@@ -289,20 +303,20 @@ ${tapeHTML()}
 <div>
 <h3>What each label means</h3>
 <dl class="labels">
-<dt>Primary source</dt><dd>The standards body, project or company that did the thing published it.</dd>
+<dt>Primary source</dt><dd>The standards body, project or company published it itself.</dd>
 <dt>Secondary source</dt><dd>A news site or other third party reported it.</dd>
 <dt>Vendor's own claim, or reported by the vendor</dt><dd>The company describes itself. Nobody else checked it.</dd>
-<dt>GitHub repo data</dt><dd>License, stars and last push come from the GitHub API. For these entries the date is the last push, in UTC, so it can read one day after the check date. Stars are a count, not a score.</dd>
-<dt>Date not captured</dt><dd>The source had no date we could confirm.</dd>
+<dt>GitHub repo data</dt><dd>License, stars and last push come from the GitHub API. The date is the last push in UTC, so it can read a day after the check date.</dd>
+<dt>Date not captured</dt><dd>The source gave no date we could confirm.</dd>
 </dl>
 </div>
 <div>
 <h3>What this map is not</h3>
-<p>It does not rank, rate, certify or recommend anything. Nobody paid to be listed. Leads that could not be confirmed from a source are left out.</p>
-<h3>About the phrase "trust layer"</h3>
-<p>Several vendors and projects describe themselves this way, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce uses <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> for something else. It means protecting data sent to language models. This site is not connected to any of them.</p>
+<p>It does not rank, rate, certify or recommend anything. Nobody paid to be listed. Leads that no source confirms are left out.</p>
+<h3>The phrase "trust layer"</h3>
+<p>Several vendors and projects use it, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce's <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> means protecting data sent to language models. This site is not connected to any of them.</p>
 <h3>Read the data yourself</h3>
-<p>The map is built from two files, <a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a>. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
+<p><a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a> hold the map. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
 </div>
 </div>
 </section>

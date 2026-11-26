@@ -40,6 +40,31 @@
     return str ? '?' + str : '';
   };
 
+  // ---- long lists: show the first few, the rest behind a button ----
+  // A list is open when the visitor opened it, or when any filter is on (so a match is never hidden).
+  const lists = $$('[data-cap]');
+  const moreBtn = (ol) => $(`button.more[aria-controls="${ol.id}"]`);
+  function syncList(ol, filtered) {
+    const btn = moreBtn(ol);
+    const plain = ol.dataset.plain === '1';   // the spec table and the month tape take no filter
+    const open = (!plain && filtered) || ol.dataset.user === '1';
+    ol.classList.toggle('open', open);
+    if (!btn) return;
+    const matches = plain ? Infinity : $$('li.entry', ol).filter((li) => !li.hidden).length;
+    btn.parentElement.hidden = (!plain && filtered) || matches <= +ol.dataset.cap;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.textContent = open ? 'Show fewer' : `Show ${btn.dataset.n} ${btn.dataset.noun}`;
+  }
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button.more');
+    if (!b) return;
+    const ol = document.getElementById(b.getAttribute('aria-controls'));
+    ol.dataset.user = ol.dataset.user === '1' ? '0' : '1';
+    syncList(ol, false);
+  });
+  const openList = (li) => { const ol = li.closest('ol[data-cap]:not([data-plain])'); if (ol && ol.dataset.user !== '1') { ol.dataset.user = '1'; syncList(ol, readFilteredState()); } };
+  const readFilteredState = () => { const f = readForm(); return !!(f.q || f.cat || f.os || f.recent); };
+
   // ---- filtering ----
   const today = Date.now();
   function apply(s, push = true) {
@@ -59,11 +84,15 @@
       const all = $$('li.entry', g);
       const vis = all.filter((li) => !li.hidden).length;
       const c = $('.count .shown', g);
-      if (c) c.textContent = g.classList.contains('std-list') ? (vis === all.length ? '' : `${vis} of ${all.length} shown`) : vis;
+      const filteredNow = vis !== all.length;
+      if (c) c.textContent = g.classList.contains('std-list') ? (filteredNow ? `${vis} of ${all.length} shown` : '') : vis;
+      const cn = $('.count', g);
+      if (cn && !g.classList.contains('std-list')) cn.innerHTML = `<span class="shown">${vis}</span> ${filteredNow ? `of ${all.length} match` : 'entries'}`;
       $('.empty', g).hidden = vis > 0;
       g.classList.toggle('dim', vis === 0);
     }
     const filtered = s.q || s.cat || s.os || s.recent;
+    lists.forEach((ol) => syncList(ol, !!filtered));
     $('#status').textContent = filtered ? `Showing ${shown} of ${total} entries.` : `Showing all ${total} entries.`;
     $$('.tools .js-clear').forEach((b) => (b.hidden = !filtered));
     const none = $('#none-all');
@@ -225,6 +254,7 @@
     if (!li) return;
     if (li.hidden) { const s = { q: '', cat: '', os: false, recent: false }; writeForm(s); apply(s); }
     li.classList.add('seen');
+    openList(li);
     $('details', li).open = true;
     $$('.entry.target').forEach((x) => x.classList.remove('target'));
     li.classList.add('target');
@@ -274,6 +304,7 @@
   }
 
   // ---- start ----
+  lists.filter((l) => l.dataset.plain === '1').forEach((l) => syncList(l, false));
   const s0 = readURL();
   writeForm(s0);
   apply(s0, false);
