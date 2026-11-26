@@ -32,15 +32,19 @@ for (const ev of events) if (!ev.date || !ev.title || !/^https?:\/\//.test(ev.so
 const SEAL = { id: 'identity', auth: 'grant', pay: 'payment', ver: 'receipt' };
 const GATES = [
   { n: 1, cat: 'identity', key: 'id', q: 'Who are you?', plain: 'Identity', carries: 'a signed key that names the agent and its operator',
+    carryLine: 'A signed key identifies the agent and its operator',
     ex: [['web-bot-auth', 'Web Bot Auth'], ['agent-name-service-ans', 'ANS']], line: 'signed identity',
     re: /identit|naming|name serv|registr|discover|know your agent/i },
   { n: 2, cat: 'auth/permissions', key: 'auth', q: 'What may you do?', plain: 'Auth and permissions', carries: 'a scoped grant that says what the agent may do, for whom',
+    carryLine: 'A scoped grant says what the agent may do, and for whom',
     ex: [['oauth-identity-assertion-jwt-authorization-grant-id-jag', 'ID-JAG']], line: 'scoped grant',
     re: /authori[sz]|permission|delegat|grant|access|polic/i },
   { n: 3, cat: 'payments/commerce', key: 'pay', q: 'Can you pay?', plain: 'Payments and commerce', carries: 'a payment token the merchant can check',
+    carryLine: 'A payment token the merchant can check',
     ex: [['x402-and-the-x402-foundation', 'x402'], ['agent-payments-protocol-ap2', 'AP2']], line: 'payment token',
     re: /pay|commerce|checkout|transaction|merchant|shopping/i },
   { n: 4, cat: 'verification', key: 'ver', q: 'Can we prove what you did?', plain: 'Verification and records', carries: 'a signed receipt of what happened',
+    carryLine: 'A signed receipt of what happened',
     ex: [['agent-execution-receipts-aer-1', 'AER-1'], ['verifiable-intent', 'Verifiable Intent']], line: 'signed receipt',
     re: /verif|receipt|audit|prove|proof|attest|record/i },
 ];
@@ -122,7 +126,7 @@ function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
   return `<div class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" role="group" aria-labelledby="gate-${g.n}-h">
 <div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><img class="gate-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
-<p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
+<p class="gate-sub">${esc(g.q)}</p>
 <p class="count" aria-live="polite"><span class="shown">${list.length}</span> entries</p>
 <p class="pagelink"><a href="${PAGE_SLUG[g.cat]}/">Read this gate as a page</a></p></div></div>
 ${g.cat === 'payments/commerce' ? X402_BLOCK : ''}${listHTML(list)}${emptyHTML}</div>`;
@@ -146,7 +150,7 @@ function heroGate(g) {
 <div class="g-head"><span class="g-n" aria-hidden="true">${g.n}</span><img class="g-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="48" height="50" alt="" decoding="async"><h2 class="g-q">${esc(g.q)}</h2><span class="g-count"><b>${list.length}</b> <span>${esc(SHORT[g.cat].toLowerCase())}</span></span></div>
 <ul class="g-dots" aria-hidden="true">${list.map(() => '<li></li>').join('')}</ul>
 <div class="g-more"><div class="g-inner">
-<p class="g-carry">The request now carries ${esc(g.carries)}, for example ${g.ex.map(([id, l]) => `<a href="#e-${id}">${esc(l)}</a>`).join(' or ')}.</p>
+<p class="g-carry">${esc(g.carryLine)} (${g.ex.map(([id, l]) => `<a href="#e-${id}">${esc(l)}</a>`).join(' or ')}).</p>
 <ul class="g-names">${list.map((e, i) => `<li style="--i:${i}"><a href="#e-${esc(e.id)}">${esc(e.name.replace(/ \(now part of .+\)$/, ''))}</a></li>`).join('')}</ul>
 </div></div></li>`;
 }
@@ -260,7 +264,7 @@ ${GATES.map(gateHTML).join('\n')}
 
 <section class="wrap block" id="specs" aria-labelledby="specs-h">
 <h2 id="specs-h"><img class="sec-emblem" src="img/emblem-standards.webp" width="48" height="50" alt="" decoding="async"> The specs underneath</h2>
-<p class="lede">A filled dot marks the gate where a spec is listed. A ring marks another gate that its own description names. The match is by keyword, so read the spec before you rely on it.</p>
+<p class="lede">A filled dot is the listed gate; a ring is another gate the spec mentions. The match is by keyword, so read the spec before you rely on it.</p>
 ${ribbonHTML()}
 <div class="std-list c-std" data-gate="std"><h3>Cross-gate standards (${entries.filter((e) => e.category === 'standards').length})</h3><p class="count"><span class="shown"></span></p>${listHTML(entries.filter((e) => e.category === 'standards'))}${emptyHTML}</div>
 </section>
@@ -279,10 +283,9 @@ ${ribbonHTML()}
 </dl>
 </div>
 <div>
-<h3>What this map is not</h3>
 <p>It does not rank, rate, certify or recommend anything. Nobody paid to be listed. Leads that no source confirms are left out.</p>
 <h3>The phrase "trust layer"</h3>
-<p>Several vendors and projects use it, for example ${trustLayerSelf.map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}. Salesforce's <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> means protecting data sent to language models. This site is not connected to any of them.</p>
+<p>Several vendors and projects use it, including ${trustLayerSelf.slice(0, -1).map((e) => `<a href="#e-${esc(e.id)}">${esc(e.name)}</a>`).join(', ')}, and <a href="#e-${esc(trustLayerSelf.at(-1).id)}">${esc(trustLayerSelf.at(-1).name)}</a>. Salesforce's <a href="#e-salesforce-einstein-trust-layer">Einstein Trust Layer</a> means protecting data sent to language models. This site is not connected to any of them.</p>
 <h3>Read the data yourself</h3>
 <p><a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a> hold the map. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
 </div>
