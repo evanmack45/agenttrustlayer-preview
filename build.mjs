@@ -113,13 +113,19 @@ function listHTML(list, cls = '') {
 }
 const emptyHTML = `<p class="empty" hidden><img class="empty-mini" src="img/empty-chart-440.webp" width="72" height="72" alt="" decoding="async"> No entries here match. <button type="button" class="linkbtn js-clear">Clear filters</button></p>`;
 
+const PAGE_SLUG = { identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' };
+const x402 = entries.find((e) => e.id === 'x402-and-the-x402-foundation');
+if (!x402 || !/Linux Foundation/.test(x402.description) || !/402/.test(x402.description)) throw new Error('x402 entry changed: re-read the answer text');
+const X402_TEXT = `x402 is an open payment protocol built on the HTTP 402 status code, for agents and APIs. It is operational under the <a href="${esc(x402.source_url)}" rel="noopener">Linux Foundation</a>, with 40 member organizations as of July 2026.`;
+const X402_BLOCK = `<p class="def" id="x402-def"><b>What is x402?</b> ${X402_TEXT} In this map it is the payment token a merchant can check.</p>\n`;
 function gateHTML(g) {
   const list = entries.filter((e) => e.category === g.cat);
   return `<div class="gate c-${g.key}" id="gate-${g.n}" data-gate="${g.n}" role="group" aria-labelledby="gate-${g.n}-h">
 <div class="gate-head"><p class="gate-num" aria-hidden="true">${g.n}</p><img class="gate-emblem" src="img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><div><h2 id="gate-${g.n}-h">${esc(g.plain)}</h2>
 <p class="gate-sub">${esc(g.q)} The request carries ${esc(g.carries)}.</p>
-<p class="count" aria-live="polite"><span class="shown">${list.length}</span> entries</p></div></div>
-${listHTML(list)}${emptyHTML}</div>`;
+<p class="count" aria-live="polite"><span class="shown">${list.length}</span> entries</p>
+<p class="pagelink"><a href="${PAGE_SLUG[g.cat]}/">Read this gate as a page</a></p></div></div>
+${g.cat === 'payments/commerce' ? X402_BLOCK : ''}${listHTML(list)}${emptyHTML}</div>`;
 }
 
 function ribbonHTML() {
@@ -165,6 +171,9 @@ const trustLayerSelf = entries.filter((e) => e.id !== 'salesforce-einstein-trust
 
 const desc = `A sourced, dated map of ${entries.length} standards, products, open-source projects and deals for AI agent identity, permissions, payments and verification. Every entry links its source.`;
 
+const DATASET_LD = { '@context': 'https://schema.org', '@type': 'Dataset', name: 'Agent Trust Layer map of AI agent trust standards, products and deals', description: desc, url: BASE, dateModified: generated, isAccessibleForFree: true, keywords: ['AI agents', 'agent identity', 'agent authorization', 'agent payments', 'verification', 'x402', 'standards'], creator: { '@type': 'Organization', name: 'Agent Trust Layer', url: BASE }, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: BASE + 'data/entries.json' }] };
+const datasetTag = `<script type="application/ld+json">${JSON.stringify(DATASET_LD).replace(/</g, '\\u003c')}</script>`;
+
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -183,6 +192,7 @@ const html = `<!doctype html>
 <meta property="og:image:alt" content="A large ornate brass key lying across a compass rose over a faint chart grid with dotted routes and beacon points.">
 <link rel="preload" as="image" href="img/hero.webp" imagesrcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" imagesizes="100vw">
 <meta name="twitter:card" content="summary_large_image">
+${datasetTag}
 <meta name="theme-color" content="#1f2bd1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
@@ -292,9 +302,67 @@ ${ribbonHTML()}
 </html>
 `;
 
+
+// ---- one answer page per gate: /identity/, /permissions/, /payments/, /verification/ ----
+const slugOf = (g) => PAGE_SLUG[g.cat];
+const PAGE_COPY = {
+  identity: { h1: 'Which standards give an AI agent an identity?', lead: (n) => `A signed key that names the agent and its operator. ${n} standards, products and deals do this work, newest first, each linked to its source. Web Bot Auth and Agent Name Service (ANS) are two examples.` },
+  permissions: { h1: 'Which standards limit what an AI agent may do?', lead: (n) => `A scoped grant that says what the agent may do, and for whom. ${n} standards, products and deals cover it, newest first, each linked to its source. The OAuth Identity Assertion JWT Authorization Grant (ID-JAG) is one example.` },
+  payments: { h1: 'What is x402, and what else lets AI agents pay?', lead: (n) => `${X402_TEXT} ${n} payment entries follow, each linked to its source.` },
+  verification: { h1: 'Which standards prove what an AI agent did?', lead: (n) => `A signed receipt of what happened. ${n} standards, products and deals cover it, newest first, each linked to its source. Agent Execution Receipts (AER-1) and Verifiable Intent are two examples.` },
+};
+const plainText = (h) => h.replace(/<[^>]+>/g, '');
+const catPages = GATES.map((g) => {
+  const slug = slugOf(g), list = sortEntries(entries.filter((e) => e.category === g.cat)), copy = PAGE_COPY[slug];
+  const lead = copy.lead(list.length);
+  if (plainText(lead).split(/\s+/).length > 60) throw new Error(`${slug}: first answer over 60 words`);
+  const url = BASE + slug + '/';
+  const rows = list.map((e) => `<li><a href="${esc(e.source_url)}" rel="noopener">${esc(e.name)}</a><span class="m">${esc(e.kind)}, ${esc(fmtDate(e.source_date))}. ${esc(verLabel(e.verification))}.</span></li>`).join('\n');
+  const ld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: copy.h1, url, description: plainText(lead), dateModified: generated, isPartOf: { '@type': 'WebSite', name: 'Agent Trust Layer', url: BASE }, mainEntity: { '@type': 'ItemList', numberOfItems: list.length, itemListElement: list.map((e, i) => ({ '@type': 'ListItem', position: i + 1, name: e.name, url: e.source_url })) } };
+  const page = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="canonical" href="${url}">
+<title>${esc(copy.h1)} | Agent Trust Layer</title>
+<meta name="description" content="${esc(plainText(lead).slice(0, 155).replace(/\s+\S*$/, ''))}">
+<meta property="og:title" content="${esc(copy.h1)}">
+<meta property="og:description" content="${esc(plainText(lead).slice(0, 155).replace(/\s+\S*$/, ''))}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${esc(BASE)}og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1f2bd1">
+<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
+<link rel="preload" href="../fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero"><nav class="wrap bar" aria-label="Sections"><a class="brand" href="../">Agent Trust Layer</a><span class="navlinks"><a href="../#map">Full map</a></span></nav></header>
+<main class="wrap catp c-${g.key}">
+<div class="catp-head"><img class="gate-emblem" src="../img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><h1>${esc(copy.h1)}</h1></div>
+<p class="catp-a" id="cat-answer">${lead}</p>
+<ol class="catp-list" id="cat-list">
+${rows}
+</ol>
+<p class="catp-go"><a class="cardbtn" href="../?cat=${encodeURIComponent(g.cat)}">Search and filter these on the map</a></p>
+</main>
+<footer class="foot"><div class="wrap">
+<p>Data last checked ${esc(fmtDate(generated))} (US Central time). Every entry links its source.</p>
+</div></footer>
+</body>
+</html>
+`;
+  return { slug, url, page, n: list.length };
+});
+
 mkdirSync(join(OUT, 'data'), { recursive: true });
 mkdirSync(join(OUT, 'fonts'), { recursive: true });
 writeFileSync(join(OUT, 'index.html'), html);
+for (const c of catPages) { mkdirSync(join(OUT, c.slug), { recursive: true }); writeFileSync(join(OUT, c.slug, 'index.html'), c.page); }
 for (const f of ['style.css', 'app.js']) copyFileSync(join(here, 'src', f), join(OUT, f));
 mkdirSync(join(OUT, 'img'), { recursive: true });
 for (const f of readdirSync(join(here, 'src', 'img'))) copyFileSync(join(here, 'src', 'img', f), join(OUT, 'img', f));
@@ -305,7 +373,7 @@ writeFileSync(join(OUT, 'data', 'entries.json'), JSON.stringify(entriesDoc, null
 const { unverified_leads_not_published, ...publicLog } = changelogDoc;
 writeFileSync(join(OUT, 'data', 'changelog.json'), JSON.stringify(publicLog, null, 2) + '\n');
 writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${BASE}sitemap.xml\n`);
-writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${BASE}</loc></url></urlset>\n`);
+writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${BASE}</loc></url>${catPages.map((c) => `<url><loc>${c.url}</loc></url>`).join('')}</urlset>\n`);
 writeFileSync(join(OUT, 'CNAME'), 'agenttrustlayer.com\n');
 writeFileSync(join(OUT, '.nojekyll'), '');
 writeFileSync(join(OUT, 'llms.txt'), `# Agent Trust Layer: a living map

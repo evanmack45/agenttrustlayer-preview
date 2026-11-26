@@ -371,3 +371,20 @@ html:not(.js) .js-card { display: none; }
   .week { padding-top: 32px; }
   .gate-sub { display: none; }
 }
+
+/* ---------- x402 definition and per-gate answer pages ---------- */
+.def { grid-column: 1 / -1; margin: 0 0 14px; max-width: 40em; padding: 12px 14px; background: var(--white); border-left: 4px solid var(--cb); }
+.def b { font-family: var(--display); }
+.pagelink { margin: 2px 0 0; font-size: 15px; }
+.catp { padding-top: 28px; padding-bottom: 8px; max-width: 860px; }
+.catp-head { display: grid; grid-template-columns: 72px 1fr; gap: 14px; align-items: center; margin-bottom: 14px; }
+.catp h1 { font-size: clamp(28px, 6vw, 46px); font-weight: 800; }
+.catp-a { font-size: 19px; max-width: 36em; margin: 0 0 22px; }
+.catp-a a { font-weight: 700; }
+.catp-list { list-style: none; margin: 0 0 24px; padding: 0; border-top: 2px solid var(--ink); }
+.catp-list li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.catp-list li a { font-weight: 700; padding: 6px 0; }
+.catp-list .m { font-size: 15px; color: var(--ink2); }
+.catp-go { margin: 0 0 8px; }
+.catp-go a { display: inline-block; text-decoration: none; padding: 14px 18px; }
+@media (min-width: 700px) { .catp-list li { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 24px; } .catp-list .m { text-align: right; } }
