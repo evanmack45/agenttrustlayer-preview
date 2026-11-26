@@ -225,10 +225,8 @@ ${datasetTag}
 ${GATES.map(heroGate).join('\n')}
 ${heroDeals}
 </ol>
-<div class="meter" aria-hidden="true"><span></span></div>
 </div>
 </div>
-<div class="steps" aria-hidden="true">${[1, 2, 3, 4, 5].map((n) => `<div class="step" data-step="${n}"></div>`).join('')}</div>
 </section>
 </header>
 

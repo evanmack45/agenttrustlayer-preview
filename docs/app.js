@@ -1,4 +1,4 @@
-// Filters, search, shareable state and the scroll story. The page works without this file.
+// Filters, search, shareable state. The page works without this file.
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -264,47 +264,6 @@
     li.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
   }
   window.addEventListener('hashchange', openFromHash);
-
-  // ---- the hero story: one request, step by step ----
-  const stage = $('#stage');
-  const gs = $$('.track .g');
-  const stamps = $$('.stamps li');
-  function setStep(n) {
-    if (stage.dataset.step === String(n)) return;
-    stage.dataset.step = n;
-    gs.forEach((g) => {
-      const k = +g.dataset.g;
-      g.classList.toggle('is-active', k === n);
-      g.classList.toggle('is-passed', k < n);
-    });
-    stamps.forEach((s) => {
-      const on = +s.dataset.g <= n;
-      if (on && !s.classList.contains('on')) { s.classList.add('stamp'); setTimeout(() => s.classList.remove('stamp'), 600); }
-      s.classList.toggle('on', on);
-    });
-  }
-  if (!reduce && 'IntersectionObserver' in window) {
-    document.documentElement.classList.add('story');
-    setStep(1);
-    const io = new IntersectionObserver((items) => {
-      for (const it of items) if (it.isIntersecting) setStep(+it.target.dataset.step);
-    }, { rootMargin: '-50% 0px -50% 0px' });
-    $$('.steps .step').forEach((s) => io.observe(s));
-    const req = $('#request');
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const r = req.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
-        stage.style.setProperty('--p', p.toFixed(3));
-        ticking = false;
-      });
-    };
-    addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
 
   // ---- start ----
   lists.filter((l) => l.dataset.plain === '1').forEach((l) => syncList(l, false));
