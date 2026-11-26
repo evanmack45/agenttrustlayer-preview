@@ -359,7 +359,7 @@
       "source_date": "2026-09-22",
       "source_date_precision": "day",
       "open_source": false,
-      "verification": "primary",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
@@ -373,7 +373,7 @@
       "source_date": "2026-09-30",
       "source_date_precision": "day",
       "open_source": false,
-      "verification": "primary",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
@@ -610,7 +610,7 @@
       "source_date": "2026-10",
       "source_date_precision": "month",
       "open_source": false,
-      "verification": "primary (page not opened; description from search summary)",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
@@ -639,7 +639,7 @@
       "source_date": "2026-11",
       "source_date_precision": "month",
       "open_source": false,
-      "verification": "primary (page not opened; from search result)",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
@@ -726,7 +726,7 @@
       "source_date": null,
       "source_date_precision": null,
       "open_source": false,
-      "verification": "primary (via search summary)",
+      "verification": "secondary",
       "last_checked": "2026-11-24",
       "note": "Listed to show the other meaning of the phrase. Docs date not captured."
     },
@@ -799,7 +799,7 @@
       "source_date": "2026-09-22",
       "source_date_precision": "day",
       "open_source": null,
-      "verification": "primary",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
@@ -813,7 +813,7 @@
       "source_date": "2026-09-30",
       "source_date_precision": "day",
       "open_source": null,
-      "verification": "primary",
+      "verification": "secondary",
       "last_checked": "2026-11-24"
     },
     {
