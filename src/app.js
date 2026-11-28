@@ -272,3 +272,9 @@
   apply(s0, false);
   if (location.hash) openFromHash();
 })();
+
+// Phone: "How to read this map" starts closed unless the link points inside it.
+(() => {
+  const d = document.getElementById('about-d');
+  if (d && !matchMedia('(min-width: 960px)').matches && !/^#(about|e-)/.test(location.hash)) d.open = false;
+})();

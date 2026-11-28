@@ -92,7 +92,7 @@ const specs = entries.filter((e) => e.kind === 'standard' || e.kind === 'protoco
 const SHORT = { identity: 'Identity', 'auth/permissions': 'Permissions', 'payments/commerce': 'Payments', verification: 'Proof' };
 // Each entry is one line: name, short tag, source arrow. Dates, check date, source label and
 // the description sit behind the line (a details toggle). The page-level "checked" date is in the list lead.
-const CAP = 8;       // entries shown per category before the "show more" button
+const CAP = 6;       // entries shown per category before the "show more" button
 const CAP_SLACK = 2; // a list of CAP + 2 or fewer shows in full: "show 1 more" is not worth a button
 function entryHTML(e, over = false) {
   const os = e.open_source === true ? '<span class="tag tag-os">Open source</span>' : e.open_source === false ? '<span class="tag">Not open source</span>' : '';
@@ -152,6 +152,7 @@ function heroGate(g) {
 <div class="g-more"><div class="g-inner">
 <p class="g-carry">${esc(g.carryLine)} (${g.ex.map(([id, l]) => `<a href="#e-${id}">${esc(l)}</a>`).join(' or ')}).</p>
 <ul class="g-names">${list.map((e, i) => `<li style="--i:${i}"><a href="#e-${esc(e.id)}">${esc(e.name.replace(/ \(now part of .+\)$/, ''))}</a></li>`).join('')}</ul>
+<p class="g-jump"><a href="#gate-${g.n}">See all ${list.length} in the map</a></p>
 </div></div></li>`;
 }
 const dealEvents = events.filter((e) => e.type === 'deal');
@@ -164,6 +165,7 @@ const heroDeals = `<li class="g g-deal" data-g="5">
 <p class="g-carry">Big platforms are buying the companies that check agents. Each line links its source.</p>
 <ol class="merges">${mergeRows.map(({ ev, mg }, i) => `<li style="--i:${i}"><span class="m-pair"><span class="m-from">${esc(mg.from)}</span><span class="m-to">${esc(mg.to)}</span></span><a class="m-src" href="${esc(ev.source_url)}" rel="noopener">${esc(fmtDate(ev.date))}<span class="vh">: ${esc(ev.title)}</span></a></li>`).join('')}
 ${pending.map((ev) => `<li class="pending"><span class="m-pair"><span class="m-from">${esc(ev.title.match(/acquire (\w+)/i)?.[1] || '')}</span><span class="m-to">${esc(ev.title.split(' ')[0])}</span></span><a class="m-src" href="${esc(ev.source_url)}" rel="noopener">Announced ${esc(fmtDate(ev.date))}, not closed<span class="vh">: ${esc(ev.title)}</span></a></li>`).join('')}</ol>
+<p class="g-jump"><a href="#deals">See all ${dealEvents.length} deals in the map</a></p>
 </div></div></li>`;
 
 const weekCut = new Date(Date.parse(generated + 'T12:00:00Z') - 7 * 864e5).toISOString().slice(0, 10);
@@ -193,12 +195,17 @@ const html = `<!doctype html>
 <meta property="og:image" content="${esc(BASE)}og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A large ornate brass key lying across a compass rose over a faint chart grid with dotted routes and beacon points.">
+<meta property="og:image:alt" content="Agent Trust Layer: How an AI agent gets trusted. Four numbered gates in a row; a lime agent pill has passed gates 1 and 2 and is entering gate 3.">
 <link rel="preload" as="image" href="img/hero.webp" imagesrcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" imagesizes="100vw">
 <meta name="twitter:card" content="summary_large_image">
 ${datasetTag}
 <meta name="theme-color" content="#1f2bd1">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/json" href="data/entries.json" title="Map entries">
@@ -208,7 +215,7 @@ ${datasetTag}
 <body>
 <a class="skip" href="#map">Skip to the full map</a>
 <header class="hero">
-<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./">Agent Trust Layer</a><span class="navlinks"><a href="#map">Map</a><a href="#specs">Specs</a><a href="#about">About</a></span></nav>
+<nav class="wrap bar" aria-label="Sections"><a class="brand" href="./"><img src="img/lockup-on-blue.svg" width="181" height="26" alt="Agent Trust Layer"></a><span class="navlinks"><a href="#map">Map</a><a href="#specs">Specs</a><a href="#about">About</a></span></nav>
 <div class="intro">
 <img class="intro-art" src="img/hero.webp" srcset="img/hero-800.webp 800w, img/hero.webp 1280w, img/hero-1920.webp 1920w" sizes="100vw" width="1280" height="714" alt="Antique star-and-sea chart with islands of contour lines, brass keys, wax seals and lighthouses linked by dotted and gold routes, an armillary sphere and compass rose at right." fetchpriority="high" decoding="async">
 <div class="wrap intro-copy">
@@ -270,7 +277,8 @@ ${ribbonHTML()}
 </section>
 
 <section class="wrap block about" id="about" aria-labelledby="about-h">
-<h2 id="about-h">How to read this map</h2>
+<details class="about-d" id="about-d" open>
+<summary><h2 id="about-h">How to read this map</h2></summary>
 <div class="cols">
 <div>
 <h3>What each label means</h3>
@@ -290,6 +298,7 @@ ${ribbonHTML()}
 <p><a href="data/entries.json">entries.json</a> and <a href="data/changelog.json">changelog.json</a> hold the map. Agents can start at <a href="llms.txt">llms.txt</a>.</p>
 </div>
 </div>
+</details>
 </section>
 </main>
 
@@ -336,13 +345,18 @@ const catPages = GATES.map((g) => {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1f2bd1">
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2bd1'/%3E%3Crect x='4' y='6' width='8' height='4' rx='2' fill='%23d7ff3c'/%3E%3C/svg%3E">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="../favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="../apple-touch-icon-180.png">
+<link rel="manifest" href="../site.webmanifest">
 <link rel="preload" href="../fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-<header class="hero"><nav class="wrap bar" aria-label="Sections"><a class="brand" href="../">Agent Trust Layer</a><span class="navlinks"><a href="../#map">Full map</a></span></nav></header>
+<header class="hero"><nav class="wrap bar" aria-label="Sections"><a class="brand" href="../"><img src="../img/lockup-on-blue.svg" width="181" height="26" alt="Agent Trust Layer"></a><span class="navlinks"><a href="../#map">Full map</a></span></nav></header>
 <main class="wrap catp c-${g.key}">
 <div class="catp-head"><img class="gate-emblem" src="../img/emblem-${({ identity: 'identity', 'auth/permissions': 'permissions', 'payments/commerce': 'payments', verification: 'verification' })[g.cat]}.webp" width="72" height="74" alt="" decoding="async"><h1>${esc(copy.h1)}</h1></div>
 <p class="catp-a" id="cat-answer">${lead}</p>
@@ -368,6 +382,7 @@ for (const f of ['style.css', 'app.js']) copyFileSync(join(here, 'src', f), join
 mkdirSync(join(OUT, 'img'), { recursive: true });
 for (const f of readdirSync(join(here, 'src', 'img'))) copyFileSync(join(here, 'src', 'img', f), join(OUT, 'img', f));
 copyFileSync(join(here, 'src', 'img', 'og.jpg'), join(OUT, 'og.jpg'));
+for (const f of readdirSync(join(here, 'src', 'brand'))) copyFileSync(join(here, 'src', 'brand', f), join(OUT, f));
 for (const f of readdirSync(join(here, 'src', 'fonts'))) copyFileSync(join(here, 'src', 'fonts', f), join(OUT, 'fonts', f));
 writeFileSync(join(OUT, 'data', 'entries.json'), JSON.stringify(entriesDoc, null, 2) + '\n');
 // Publish the changelog without the unverified leads.
